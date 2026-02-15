@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String      @id @default(uuid())
+  username     String      @unique
+  email        String      @unique
+  passwordHash String
+  avatarUrl    String?
+  createdAt    DateTime    @default(now())
+  dateNights1  DateNight[] @relation("User1DateNights")
+  dateNights2  DateNight[] @relation("User2DateNights")
+}
+
+model Activity {
+  id          String      @id @default(uuid())
+  title       String
+  description String?
+  type        String
+  dateNights  DateNight[]
+}
+
+model DateNight {
+  id         String    @id @default(uuid())
+  user1Id    String
+  user2Id    String?
+  activityId String
+  startTime  DateTime
+  endTime    DateTime?
+  createdAt  DateTime  @default(now())
+
+  user1    User      @relation("User1DateNights", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2    User?     @relation("User2DateNights", fields: [user2Id], references: [id], onDelete: Cascade)
+  activity Activity  @relation(fields: [activityId], references: [id])
+}
