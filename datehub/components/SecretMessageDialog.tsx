@@ -21,11 +21,11 @@ const MESSAGE_LINES = [
 export default function SecretMessageDialog({ onClose }: { onClose: () => void }) {
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="relative mx-4 max-w-md animate-[fadeScale_0.3s_ease-out] overflow-hidden rounded-2xl border border-pink-400/25 bg-gradient-to-b from-[#1f0a18] via-[#150810] to-[#0d0710] p-8 shadow-2xl shadow-pink-500/15"
+        className="relative w-full sm:mx-4 sm:max-w-md max-h-[85dvh] flex flex-col animate-[fadeSlideUp_0.3s_ease-out] sm:animate-[fadeScale_0.3s_ease-out] overflow-hidden rounded-t-2xl sm:rounded-2xl border border-pink-400/25 bg-gradient-to-b from-[#1f0a18] via-[#150810] to-[#0d0710] shadow-2xl shadow-pink-500/15"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sparkle accents */}
@@ -46,45 +46,55 @@ export default function SecretMessageDialog({ onClose }: { onClose: () => void }
         {/* Top shimmer */}
         <div className="absolute left-0 right-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-pink-400/40 to-transparent" />
 
-        <div className="relative mt-3 space-y-1" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
-          {MESSAGE_LINES.map((line, i) => {
-            if (line === "") return <div key={i} className="h-3" />;
+        {/* Scrollable content */}
+        <div className="overflow-y-auto overscroll-contain p-6 sm:p-8 pt-8 sm:pt-8">
+          <div className="relative space-y-1" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
+            {MESSAGE_LINES.map((line, i) => {
+              if (line === "") return <div key={i} className="h-2 sm:h-3" />;
 
-            const isGreeting = i === 0;
-            const isSignOff = i >= MESSAGE_LINES.length - 3;
+              const isGreeting = i === 0;
+              const isSignOff = i >= MESSAGE_LINES.length - 3;
 
-            return (
-              <p
-                key={i}
-                className={`leading-relaxed ${
-                  isGreeting
-                    ? "text-center text-xl font-semibold text-pink-200"
-                    : isSignOff
-                      ? "text-center text-base text-pink-300/90 italic"
-                      : "text-[15px] text-pink-100/80"
-                }`}
-              >
-                {line}
-              </p>
-            );
-          })}
+              return (
+                <p
+                  key={i}
+                  className={`leading-relaxed ${
+                    isGreeting
+                      ? "text-center text-lg sm:text-xl font-semibold text-pink-200"
+                      : isSignOff
+                        ? "text-center text-sm sm:text-base text-pink-300/90 italic"
+                        : "text-sm sm:text-[15px] text-pink-100/80"
+                  }`}
+                >
+                  {line}
+                </p>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Bottom shimmer */}
-        <div className="mt-6 h-[1px] bg-gradient-to-r from-transparent via-pink-400/30 to-transparent" />
+        {/* Sticky bottom */}
+        <div className="shrink-0 px-6 sm:px-8 pb-6 sm:pb-8">
+          {/* Bottom shimmer */}
+          <div className="mb-4 h-[1px] bg-gradient-to-r from-transparent via-pink-400/30 to-transparent" />
 
-        <button
-          onClick={onClose}
-          className="mx-auto mt-4 block rounded-full border border-pink-400/15 bg-pink-500/10 px-6 py-2 text-xs font-medium text-pink-300 transition-all hover:bg-pink-500/20 hover:border-pink-400/30"
-        >
-          close 💗
-        </button>
+          <button
+            onClick={onClose}
+            className="mx-auto block rounded-full border border-pink-400/15 bg-pink-500/10 px-6 py-2.5 sm:py-2 text-sm sm:text-xs font-medium text-pink-300 transition-all hover:bg-pink-500/20 hover:border-pink-400/30"
+          >
+            close 💗
+          </button>
+        </div>
       </div>
 
       <style jsx global>{`
         @keyframes fadeScale {
           from { opacity: 0; transform: scale(0.9); }
           to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes fadeSlideUp {
+          from { opacity: 0; transform: translateY(100%); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes float {
           0%, 100% { transform: translateX(-50%) translateY(0); }
