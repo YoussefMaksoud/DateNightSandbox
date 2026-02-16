@@ -1,14 +1,18 @@
-import type { HTMLAttributes } from "react";
+import type { HTMLAttributes } from "react"
 
-function Card({ className = "", children, ...props }: HTMLAttributes<HTMLDivElement>) {
+interface CardProps extends HTMLAttributes<HTMLDivElement> {
+  hoverable?: boolean
+}
+
+function Card({ className = "", children, hoverable = false, ...props }: CardProps) {
   return (
     <div
-      className={`rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 shadow-sm ${className}`}
+      className={`rounded-2xl border border-white/[0.06] backdrop-blur-xl bg-white/[0.03] p-6 shadow-lg shadow-black/20 ${hoverable ? "hover:bg-white/[0.05] hover:border-white/[0.1] transition-all duration-300" : ""} ${className}`}
       {...props}
     >
       {children}
     </div>
-  );
+  )
 }
 
 function CardHeader({ className = "", children, ...props }: HTMLAttributes<HTMLDivElement>) {

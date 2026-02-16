@@ -39,3 +39,154 @@ model DateNight {
   user2    User?     @relation("User2DateNights", fields: [user2Id], references: [id], onDelete: Cascade)
   activity Activity  @relation(fields: [activityId], references: [id])
 }
+
+model PlaylistTrack {
+  id             String   @id @default(uuid())
+  roomId         String
+  spotifyTrackId String
+  spotifyUri     String
+  title          String
+  artist         String
+  albumName      String?
+  albumArt       String?
+  durationMs     Int      @default(0)
+  addedBy        String
+  position       Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  @@index([roomId])
+}
+
+model PlaybackState {
+  id            String   @id @default(uuid())
+  roomId        String   @unique
+  trackId       String?
+  spotifyUri    String?
+  isPlaying     Boolean  @default(false)
+  progressMs    Int      @default(0)
+  updatedBy     String?
+  updatedAt     DateTime @default(now())
+
+  @@index([roomId])
+}
+
+model SpotifyToken {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Avatar {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  skinTone    String   @default("cat")
+  hairStyle   String   @default("solid")
+  hairColor   String   @default("coral")
+  eyeColor    String   @default("round")
+  outfit      String   @default("casual-tee")
+  outfitColor String   @default("rose")
+  accessory   String   @default("none")
+  expression  String   @default("smile")
+  background  String   @default("none")
+  vehicle     String   @default("none")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MapPosition {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  x         Float    @default(400)
+  y         Float    @default(300)
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model Scrapbook {
+  id        String          @id @default(uuid())
+  roomId    String          @default("default-room")
+  name      String
+  coverUrl  String?
+  createdBy String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  pages     ScrapbookPage[]
+
+  @@index([roomId])
+}
+
+model ScrapbookPage {
+  id              String          @id @default(uuid())
+  scrapbookId     String
+  pageNumber      Int
+  backgroundColor String          @default("#FFF8F0")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  scrapbook       Scrapbook       @relation(fields: [scrapbookId], references: [id], onDelete: Cascade)
+  items           ScrapbookItem[]
+
+  @@index([scrapbookId])
+}
+
+model ScrapbookItem {
+  id        String        @id @default(uuid())
+  pageId    String
+  type      String
+  content   String
+  x         Float         @default(50)
+  y         Float         @default(50)
+  width     Float         @default(100)
+  height    Float         @default(100)
+  rotation  Float         @default(0)
+  scale     Float         @default(1)
+  zIndex    Int           @default(0)
+  createdBy String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  page      ScrapbookPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+}
+
+model VehicleBuild {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  engine    String   @default("stock")
+  tires     String   @default("street")
+  body      String   @default("sedan")
+  spoiler   String   @default("none")
+  nitro     String   @default("none")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ScreenShare {
+  id               String   @id @default(uuid())
+  roomId           String   @unique
+  hostUserId       String
+  offer            String?
+  answer           String?
+  hostCandidates   String   @default("[]")
+  viewerCandidates String   @default("[]")
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model PaintingSession {
+  id           String   @id @default(uuid())
+  userId       String
+  dateNightId  String?
+  difficulty   String   @default("beginner")
+  theme        String   @default("landscape")
+  referenceUrl String
+  palette      String   @default("[]")
+  status       String   @default("active")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+}

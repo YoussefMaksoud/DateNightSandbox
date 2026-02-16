@@ -10,3 +10,10 @@ export type {
   StartActivityResultDto,
 } from "./ActivityDtos";
 export type { TrackDto, AddTrackDto } from "./MusicDtos";
+export type { AvatarDto, SaveAvatarDto, SaveAvatarResultDto } from "./AvatarDtos";
+export type { VehicleBuildDto } from "./VehicleBuildDtos";
+export type {
+  CreatePaintingSessionDto,
+  PaintingSessionDto,
+  UpdatePaintingSessionStatusDto,
+} from "./PaintingSessionDtos";
