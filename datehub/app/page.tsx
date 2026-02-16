@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import SecretMessageLanding from "@/components/SecretMessageLanding";
 
 const features = [
   {
@@ -43,15 +44,18 @@ export default function Home() {
           collaborative activities, and shared experiences — all from the comfort
           of your own space.
         </p>
-        <div className="flex gap-4">
-          <Link href="/sign-up">
-            <Button size="lg">Get Started</Button>
-          </Link>
-          <Link href="/sign-in">
-            <Button variant="outline" size="lg">
-              Sign In
-            </Button>
-          </Link>
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex gap-4">
+            <Link href="/sign-up">
+              <Button size="lg">Get Started</Button>
+            </Link>
+            <Link href="/sign-in">
+              <Button variant="outline" size="lg">
+                Sign In
+              </Button>
+            </Link>
+          </div>
+          <SecretMessageLanding />
         </div>
       </section>
 
