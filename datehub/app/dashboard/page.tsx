@@ -436,6 +436,46 @@ export default function DashboardPage() {
           </p>
         </div>
 
+        {/* Quick Access — All Activities */}
+        <section className="mb-8">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10">
+              <span className="text-sm">✨</span>
+            </div>
+            <h2 className="text-lg font-semibold text-white">Activities</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {[
+              { href: "/map", emoji: "🗺️", label: "World Map", color: "#22C55E", desc: "Explore together" },
+              { href: "/trivia", emoji: "🧩", label: "Trivia Tower", color: "#F97316", desc: "AI-powered trivia" },
+              { href: "/race", emoji: "🏁", label: "Race Track", color: "#22C55E", desc: "Race each other" },
+              { href: "/painting", emoji: "🎨", label: "Paint Studio", color: "#9C27B0", desc: "Paint together" },
+              { href: "/music", emoji: "🎵", label: "Music Lounge", color: "#e11d48", desc: "Listen together" },
+              { href: "/scrapbook", emoji: "📔", label: "Scrapbook", color: "#e91e63", desc: "Create memories" },
+              { href: "/homework", emoji: "🎓", label: "Homework Night", color: "#1565c0", desc: "Study together" },
+              { href: "/vehicle-build", emoji: "🔧", label: "Speed Shop", color: "#E67E22", desc: "Customize ride" },
+              { href: "/avatar", emoji: "😊", label: "Avatar", color: "#8B5CF6", desc: "Customize look" },
+              { href: "/race/leaderboard", emoji: "🏆", label: "Leaderboard", color: "#DAA520", desc: "Race records" },
+            ].map((item) => (
+              <Link key={item.href} href={item.href}>
+                <div
+                  className="group flex flex-col items-center gap-2 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 transition-all hover:border-white/[0.12] hover:bg-white/[0.04]"
+                  style={{ ["--glow" as string]: item.color }}
+                >
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
+                    style={{ backgroundColor: item.color + "18" }}
+                  >
+                    <span className="text-2xl">{item.emoji}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-white">{item.label}</span>
+                  <span className="text-[10px] text-zinc-500">{item.desc}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
           {/* ═══════════════ Left Column ═══════════════ */}
           <div className="flex flex-col gap-8">
