@@ -190,3 +190,82 @@ model PaintingSession {
 
   @@index([userId])
 }
+
+model RaceRoom {
+  id           String    @id @default(uuid())
+  roomId       String    @unique
+  player1Id    String
+  player2Id    String?
+  player1Ready Boolean   @default(false)
+  player2Ready Boolean   @default(false)
+  lapCount     Int       @default(3)
+  status       String    @default("waiting")
+  player1Lap   Int       @default(0)
+  player2Lap   Int       @default(0)
+  player1T     Float     @default(0)
+  player2T     Float     @default(0)
+  player1Time  Float?
+  player2Time  Float?
+  startedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model RaceResult {
+  id         String   @id @default(uuid())
+  roomId     String
+  userId     String
+  lapCount   Int
+  finishTime Float
+  won        Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+model TriviaRoom {
+  id              String    @id @default(uuid())
+  roomId          String    @unique
+  player1Id       String
+  player2Id       String?
+  player1Ready    Boolean   @default(false)
+  player2Ready    Boolean   @default(false)
+  category        String    @default("general")
+  difficulty      String    @default("medium")
+  mode            String    @default("classic")  // classic, speed, survival
+  status          String    @default("waiting")   // waiting, playing, finished
+  currentRound    Int       @default(0)
+  totalRounds     Int       @default(10)
+  player1Score    Int       @default(0)
+  player2Score    Int       @default(0)
+  player1Streak   Int       @default(0)
+  player2Streak   Int       @default(0)
+  player1Lives    Int       @default(3)
+  player2Lives    Int       @default(3)
+  currentQuestion String?   // JSON string of current question data
+  questionSentAt  DateTime?
+  player1Answer   String?
+  player2Answer   String?
+  player1Time     Float?    // time taken for current question
+  player2Time     Float?
+  startedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model TriviaResult {
+  id            String   @id @default(uuid())
+  roomId        String
+  userId        String
+  category      String
+  mode          String
+  difficulty    String
+  score         Int
+  totalRounds   Int
+  bestStreak    Int      @default(0)
+  avgTime       Float    @default(0)
+  won           Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+}

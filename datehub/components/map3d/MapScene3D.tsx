@@ -10,8 +10,11 @@ import PlaceholderBuilding3D from "./PlaceholderBuilding3D";
 import ScrapbookBuilding3D from "./ScrapbookBuilding3D";
 import VehicleShopBuilding3D from "./VehicleShopBuilding3D";
 import RaceFlag3D from "./RaceFlag3D";
+import LeaderboardPedestal3D from "./LeaderboardPedestal3D";
+import MusicLoungeBuilding3D from "./MusicLoungeBuilding3D";
 import HomeworkBuilding3D from "./HomeworkBuilding3D";
 import PaintingBuilding3D from "./PaintingBuilding3D";
+import TriviaTowerBuilding3D from "./TriviaTowerBuilding3D";
 import AvatarSprite3D from "./AvatarSprite3D";
 
 // --- Types ---
@@ -200,7 +203,7 @@ function MapScene3DInner({
       <Environment3D />
 
       {/* Quest buildings (skip scrapbook — has its own building) */}
-      {quests.filter((q) => q.id !== "scrapbook" && q.id !== "vehicle-shop" && q.id !== "race-start" && q.id !== "homework" && q.id !== "painting").map((q) => (
+      {quests.filter((q) => q.id !== "scrapbook" && q.id !== "vehicle-shop" && q.id !== "race-start" && q.id !== "leaderboard" && q.id !== "music" && q.id !== "homework" && q.id !== "painting" && q.id !== "quiz").map((q) => (
         <QuestBuilding3D
           key={q.id}
           position={q.pos3d}
@@ -230,14 +233,26 @@ function MapScene3DInner({
 
       {/* Vehicle customization shop (along race track) */}
       <VehicleShopBuilding3D
-        position={[14, 0, 2]}
+        position={[17, 0, 2]}
         isNearby={nearbyQuest === "vehicle-shop"}
       />
 
       {/* Race start flag (on track near shop) */}
       <RaceFlag3D
-        position={[12, 0, -3]}
+        position={[17, 0, -1.5]}
         isNearby={nearbyQuest === "race-start"}
+      />
+
+      {/* Leaderboard pedestal (near race flag) */}
+      <LeaderboardPedestal3D
+        position={[17, 0, -5]}
+        isNearby={nearbyQuest === "leaderboard"}
+      />
+
+      {/* Music Lounge */}
+      <MusicLoungeBuilding3D
+        position={[-5, 0, -6]}
+        isNearby={nearbyQuest === "music"}
       />
 
       {/* Homework Night (replaces Bookshop) */}
@@ -252,6 +267,12 @@ function MapScene3DInner({
         isNearby={nearbyQuest === "painting"}
       />
 
+      {/* Trivia Tower */}
+      <TriviaTowerBuilding3D
+        position={[0, 0, -12]}
+        isNearby={nearbyQuest === "quiz"}
+      />
+
       {/* Current player */}
       <PlayerController
         myPos={myPos}
@@ -260,19 +281,50 @@ function MapScene3DInner({
         myName={myName}
       />
 
-      {/* Other players */}
-      {players.map((p) => {
-        const [wx, wz] = toWorld(p.x, p.y);
-        return (
-          <AvatarSprite3D
-            key={p.userId}
-            position={[wx, 0, wz]}
-            config={p.avatar || defaultAvatar}
-            label="Player"
-          />
-        );
-      })}
+      {/* Other players (with smooth interpolation) */}
+      {players.map((p) => (
+        <RemotePlayer
+          key={p.userId}
+          targetX={p.x}
+          targetY={p.y}
+          avatar={p.avatar || defaultAvatar}
+        />
+      ))}
     </>
+  );
+}
+
+// --- Remote player with lerp interpolation ---
+
+function RemotePlayer({ targetX, targetY, avatar }: {
+  targetX: number;
+  targetY: number;
+  avatar: AvatarConfig;
+}) {
+  const groupRef = useRef<THREE.Group>(null!);
+  const posRef = useRef({ x: 0, z: 0, initialized: false });
+
+  useFrame((_, delta) => {
+    const [wx, wz] = toWorld(targetX, targetY);
+    if (!posRef.current.initialized) {
+      posRef.current = { x: wx, z: wz, initialized: true };
+    }
+    posRef.current.x += (wx - posRef.current.x) * Math.min(1, 8 * delta);
+    posRef.current.z += (wz - posRef.current.z) * Math.min(1, 8 * delta);
+    if (groupRef.current) {
+      groupRef.current.position.set(posRef.current.x, 0, posRef.current.z);
+    }
+  });
+
+  const [wx, wz] = toWorld(targetX, targetY);
+  return (
+    <group ref={groupRef} position={[wx, 0, wz]}>
+      <AvatarSprite3D
+        position={[0, 0, 0]}
+        config={avatar}
+        label="Player"
+      />
+    </group>
   );
 }
 

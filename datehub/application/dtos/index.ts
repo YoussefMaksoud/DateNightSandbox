@@ -17,3 +17,10 @@ export type {
   PaintingSessionDto,
   UpdatePaintingSessionStatusDto,
 } from "./PaintingSessionDtos";
+export type { RaceRoomDto, RaceResultDto, LeaderboardEntryDto } from "./RaceDtos";
+export type {
+  TriviaQuestionDto,
+  TriviaRoomDto,
+  TriviaResultDto,
+  TriviaLeaderboardEntryDto,
+} from "./TriviaDtos";

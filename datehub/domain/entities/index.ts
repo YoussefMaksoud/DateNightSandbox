@@ -12,3 +12,7 @@ export type {
 export type { VehicleBuildData } from "./VehicleBuild";
 export { PaintingSession } from "./PaintingSession";
 export type { PaintingSessionProps } from "./PaintingSession";
+export type { RaceRoomData } from "./RaceRoom";
+export type { RaceResultData } from "./RaceResult";
+export type { TriviaRoomData } from "./TriviaRoom";
+export type { TriviaResultData } from "./TriviaResult";

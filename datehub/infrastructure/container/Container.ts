@@ -30,6 +30,27 @@ import { OpenAIPaintingAdapter } from "@/infrastructure/adapters/OpenAIPaintingA
 import { CreatePaintingSessionUseCase } from "@/application/use-cases/painting-session/CreatePaintingSessionUseCase";
 import { GetPaintingSessionsUseCase } from "@/application/use-cases/painting-session/GetPaintingSessionsUseCase";
 import { UpdatePaintingSessionUseCase } from "@/application/use-cases/painting-session/UpdatePaintingSessionUseCase";
+import { IRaceRepository } from "@/domain/repositories";
+import { PrismaRaceRepository } from "@/infrastructure/repositories/PrismaRaceRepository";
+import { CreateRaceRoomUseCase } from "@/application/use-cases/race/CreateRaceRoomUseCase";
+import { JoinRaceRoomUseCase } from "@/application/use-cases/race/JoinRaceRoomUseCase";
+import { GetRaceRoomUseCase } from "@/application/use-cases/race/GetRaceRoomUseCase";
+import { UpdateRaceUseCase } from "@/application/use-cases/race/UpdateRaceUseCase";
+import { RecordRaceResultUseCase } from "@/application/use-cases/race/RecordRaceResultUseCase";
+import { GetLeaderboardUseCase } from "@/application/use-cases/race/GetLeaderboardUseCase";
+import { ITriviaRepository } from "@/domain/repositories";
+import { PrismaTriviaRepository } from "@/infrastructure/repositories/PrismaTriviaRepository";
+import { OpenAITriviaAdapter } from "@/infrastructure/adapters/OpenAITriviaAdapter";
+import { ITriviaAIService } from "@/application/ports";
+import { CreateTriviaRoomUseCase } from "@/application/use-cases/trivia/CreateTriviaRoomUseCase";
+import { JoinTriviaRoomUseCase } from "@/application/use-cases/trivia/JoinTriviaRoomUseCase";
+import { GetTriviaRoomUseCase } from "@/application/use-cases/trivia/GetTriviaRoomUseCase";
+import { UpdateTriviaRoomUseCase } from "@/application/use-cases/trivia/UpdateTriviaRoomUseCase";
+import { GenerateQuestionUseCase } from "@/application/use-cases/trivia/GenerateQuestionUseCase";
+import { SubmitAnswerUseCase } from "@/application/use-cases/trivia/SubmitAnswerUseCase";
+import { ScoreRoundUseCase } from "@/application/use-cases/trivia/ScoreRoundUseCase";
+import { SaveTriviaResultUseCase } from "@/application/use-cases/trivia/SaveTriviaResultUseCase";
+import { GetTriviaLeaderboardUseCase } from "@/application/use-cases/trivia/GetTriviaLeaderboardUseCase";
 
 class Container {
   private _activityRepository?: IActivityRepository;
@@ -40,6 +61,9 @@ class Container {
   private _vehicleBuildRepository?: IVehicleBuildRepository;
   private _paintingSessionRepository?: IPaintingSessionRepository;
   private _paintingAIService?: IPaintingAIService;
+  private _raceRepository?: IRaceRepository;
+  private _triviaRepository?: ITriviaRepository;
+  private _triviaAIService?: ITriviaAIService;
 
   get activityRepository(): IActivityRepository {
     if (!this._activityRepository) {
@@ -95,6 +119,27 @@ class Container {
       this._paintingAIService = new OpenAIPaintingAdapter();
     }
     return this._paintingAIService;
+  }
+
+  get raceRepository(): IRaceRepository {
+    if (!this._raceRepository) {
+      this._raceRepository = new PrismaRaceRepository();
+    }
+    return this._raceRepository;
+  }
+
+  get triviaRepository(): ITriviaRepository {
+    if (!this._triviaRepository) {
+      this._triviaRepository = new PrismaTriviaRepository();
+    }
+    return this._triviaRepository;
+  }
+
+  get triviaAIService(): ITriviaAIService {
+    if (!this._triviaAIService) {
+      this._triviaAIService = new OpenAITriviaAdapter();
+    }
+    return this._triviaAIService;
   }
 
   get getAvatarUseCase(): GetAvatarUseCase {
@@ -170,6 +215,66 @@ class Container {
 
   get addTrackUseCase(): AddTrackUseCase {
     return new AddTrackUseCase(this.musicService);
+  }
+
+  get createRaceRoomUseCase(): CreateRaceRoomUseCase {
+    return new CreateRaceRoomUseCase(this.raceRepository);
+  }
+
+  get joinRaceRoomUseCase(): JoinRaceRoomUseCase {
+    return new JoinRaceRoomUseCase(this.raceRepository);
+  }
+
+  get getRaceRoomUseCase(): GetRaceRoomUseCase {
+    return new GetRaceRoomUseCase(this.raceRepository);
+  }
+
+  get updateRaceUseCase(): UpdateRaceUseCase {
+    return new UpdateRaceUseCase(this.raceRepository);
+  }
+
+  get recordRaceResultUseCase(): RecordRaceResultUseCase {
+    return new RecordRaceResultUseCase(this.raceRepository);
+  }
+
+  get getLeaderboardUseCase(): GetLeaderboardUseCase {
+    return new GetLeaderboardUseCase(this.raceRepository);
+  }
+
+  get createTriviaRoomUseCase(): CreateTriviaRoomUseCase {
+    return new CreateTriviaRoomUseCase(this.triviaRepository);
+  }
+
+  get joinTriviaRoomUseCase(): JoinTriviaRoomUseCase {
+    return new JoinTriviaRoomUseCase(this.triviaRepository);
+  }
+
+  get getTriviaRoomUseCase(): GetTriviaRoomUseCase {
+    return new GetTriviaRoomUseCase(this.triviaRepository);
+  }
+
+  get updateTriviaRoomUseCase(): UpdateTriviaRoomUseCase {
+    return new UpdateTriviaRoomUseCase(this.triviaRepository);
+  }
+
+  get generateQuestionUseCase(): GenerateQuestionUseCase {
+    return new GenerateQuestionUseCase(this.triviaRepository, this.triviaAIService);
+  }
+
+  get submitAnswerUseCase(): SubmitAnswerUseCase {
+    return new SubmitAnswerUseCase(this.triviaRepository);
+  }
+
+  get scoreRoundUseCase(): ScoreRoundUseCase {
+    return new ScoreRoundUseCase(this.triviaRepository);
+  }
+
+  get saveTriviaResultUseCase(): SaveTriviaResultUseCase {
+    return new SaveTriviaResultUseCase(this.triviaRepository);
+  }
+
+  get getTriviaLeaderboardUseCase(): GetTriviaLeaderboardUseCase {
+    return new GetTriviaLeaderboardUseCase(this.triviaRepository);
   }
 }
 

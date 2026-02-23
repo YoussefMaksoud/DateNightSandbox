@@ -33,7 +33,7 @@ interface Player {
 
 // --- Constants ---
 
-const POLL_INTERVAL = 2000;
+const POLL_INTERVAL = 500;
 const INTERACT_RADIUS_3D = 3.5;
 
 const DEFAULT_AVATAR: AvatarConfig = {
@@ -53,6 +53,7 @@ const QUESTS_2D = [
   { id: "scrapbook", label: "Scrapbook Station", emoji: "📔", x: 500, y: 600, color: "#e91e63", desc: "Create scrapbooks together" },
   { id: "vehicle-shop", label: "Speed Shop", emoji: "🔧", x: 880, y: 440, color: "#E67E22", desc: "Customize your vehicle" },
   { id: "race-start", label: "Start Race", emoji: "🏁", x: 840, y: 340, color: "#22C55E", desc: "Race around the track!" },
+  { id: "leaderboard", label: "Leaderboard", emoji: "🏆", x: 880, y: 300, color: "#DAA520", desc: "View race records" },
   { id: "homework", label: "Homework Night", emoji: "🎓", x: 700, y: 380, color: "#1565c0", desc: "Study together with screen share" },
   { id: "painting", label: "Paint Studio", emoji: "🎨", x: 500, y: 380, color: "#9C27B0", desc: "Paint together on a date night" },
 ];
@@ -132,11 +133,11 @@ export default function MapPage() {
       const cur = myPosRef.current;
       const pos2d = to2D(cur.x, cur.z);
       const last = lastSyncRef.current;
-      if ((pos2d.x - last.x) ** 2 + (pos2d.y - last.z) ** 2 > 4) {
+      if ((pos2d.x - last.x) ** 2 + (pos2d.y - last.z) ** 2 > 1) {
         updatePosition(pos2d.x, pos2d.y);
         lastSyncRef.current = { x: pos2d.x, z: pos2d.y };
       }
-    }, 500);
+    }, 200);
     return () => clearInterval(interval);
   }, []);
 
@@ -277,6 +278,14 @@ export default function MapPage() {
                     router.push("/homework");
                   } else if (showQuestPrompt.id === "painting") {
                     router.push("/painting");
+                  } else if (showQuestPrompt.id === "music") {
+                    router.push("/music");
+                  } else if (showQuestPrompt.id === "race-start") {
+                    router.push("/race");
+                  } else if (showQuestPrompt.id === "leaderboard") {
+                    router.push("/race/leaderboard");
+                  } else if (showQuestPrompt.id === "quiz") {
+                    router.push("/trivia");
                   } else {
                     alert(`Starting ${showQuestPrompt.label}! (Coming soon)`);
                   }
