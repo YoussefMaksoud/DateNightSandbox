@@ -1001,16 +1001,19 @@ export default function Avatar3D({ config, isMoving }: Avatar3DProps) {
   const isGhost = config.skinTone === "ghost";
 
   useFrame(({ clock }) => {
+    if (!bodyRef.current) return;
+
     if (isGhost) {
-      // Ghost floats — gentle bob only
       const t = clock.elapsedTime * 2;
       bodyRef.current.position.y = Math.sin(t) * 0.04;
-      leftLegRef.current.rotation.x = 0;
-      rightLegRef.current.rotation.x = 0;
-      leftArmRef.current.rotation.x = 0;
-      rightArmRef.current.rotation.x = 0;
+      if (leftLegRef.current) leftLegRef.current.rotation.x = 0;
+      if (rightLegRef.current) rightLegRef.current.rotation.x = 0;
+      if (leftArmRef.current) leftArmRef.current.rotation.x = 0;
+      if (rightArmRef.current) rightArmRef.current.rotation.x = 0;
       return;
     }
+
+    if (!leftLegRef.current || !rightLegRef.current || !leftArmRef.current || !rightArmRef.current) return;
 
     if (isMoving) {
       const t = clock.elapsedTime * 8;
