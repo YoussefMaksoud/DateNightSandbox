@@ -14,7 +14,7 @@ export async function PUT(request: NextRequest) {
     const user = await requireAuth();
     const body = await request.json();
     const { roomId, ready } = readySchema.parse(body);
-    const room = await container.updateRaceUseCase.ready(roomId, user.userId, ready);
+    const room = await container.readyUpUseCase.execute(roomId, user.userId, ready);
     return { room };
   });
 }

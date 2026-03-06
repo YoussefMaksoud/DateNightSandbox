@@ -3,7 +3,6 @@ import { z } from "zod";
 import { container } from "@/infrastructure/container/Container";
 import { handleApiRequest } from "@/lib/api-handler";
 import { requireAuth } from "@/lib/auth-middleware";
-import { prisma } from "@/lib/db";
 
 const updateSchema = z.object({
   roomId: z.string(),
@@ -19,33 +18,40 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const data = updateSchema.parse(body);
 
+    const currentRoom = await container.getGameRoomUseCase.execute(data.roomId);
+    if (!currentRoom) return { error: "Room not found" };
+    const isP1 = currentRoom.player1Id === user.userId;
+
     if (data.position !== undefined) {
-      const room = await prisma.raceRoom.findUnique({ where: { roomId: data.roomId } });
-      if (!room) return { error: "Room not found" };
-      const isP1 = room.player1Id === user.userId;
-      await prisma.raceRoom.update({
-        where: { roomId: data.roomId },
-        data: isP1 ? { player1T: data.position } : { player2T: data.position },
-      });
+      await container.updateGameRoomUseCase.mergeMetadata(data.roomId,
+        isP1 ? { player1T: data.position } : { player2T: data.position }
+      );
       return { ok: true };
     }
 
     if (data.status) {
-      const room = await container.updateRaceUseCase.updateStatus(
-        data.roomId,
-        data.status,
-        data.status === "racing" ? new Date() : undefined
-      );
+      const room = await container.updateGameRoomUseCase.execute(data.roomId, {
+        status: data.status,
+        ...(data.status === "racing" ? { startedAt: new Date() } : {}),
+      });
       return { room };
     }
 
     if (data.lap !== undefined) {
-      const room = await container.updateRaceUseCase.updateLap(data.roomId, user.userId, data.lap);
+      const room = await container.updateGameRoomUseCase.mergeMetadata(data.roomId,
+        isP1 ? { player1Lap: data.lap } : { player2Lap: data.lap }
+      );
       return { room };
     }
 
     if (data.finishTime !== undefined) {
-      const room = await container.updateRaceUseCase.finish(data.roomId, user.userId, data.finishTime);
+      const meta: Record<string, unknown> = isP1 ? { player1Time: data.finishTime } : { player2Time: data.finishTime };
+      const otherFinished = isP1
+        ? (currentRoom.metadata.player2Time as number | null) !== null && currentRoom.metadata.player2Time !== undefined
+        : (currentRoom.metadata.player1Time as number | null) !== null && currentRoom.metadata.player1Time !== undefined;
+      const room = otherFinished
+        ? await container.updateGameRoomUseCase.execute(data.roomId, { status: "finished", metadata: { ...currentRoom.metadata, ...meta } })
+        : await container.updateGameRoomUseCase.mergeMetadata(data.roomId, meta);
       return { room };
     }
 

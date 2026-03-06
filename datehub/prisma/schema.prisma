@@ -192,6 +192,24 @@ model PaintingSession {
   @@index([userId])
 }
 
+model GameRoom {
+  id           String    @id @default(uuid())
+  roomId       String    @unique
+  type         String    // "race", "trivia", "painting", "escape-room"
+  player1Id    String
+  player2Id    String?
+  player1Ready Boolean   @default(false)
+  player2Ready Boolean   @default(false)
+  status       String    @default("waiting") // waiting, countdown, playing, finished
+  metadata     String    @default("{}") // JSON — game-specific data
+  startedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([type, status])
+  @@index([player1Id])
+}
+
 model RaceRoom {
   id           String    @id @default(uuid())
   roomId       String    @unique

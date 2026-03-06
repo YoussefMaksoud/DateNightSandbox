@@ -14,12 +14,39 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { roomId } = startSchema.parse(body);
 
-    // Update status to playing
-    const repo = container.triviaRepository;
-    await repo.updateStatus(roomId, "playing", new Date());
+    await container.updateGameRoomUseCase.execute(roomId, {
+      status: "playing",
+      startedAt: new Date(),
+    });
 
-    // Generate first question
-    const result = await container.generateQuestionUseCase.execute(roomId);
-    return result;
+    const room = await container.getGameRoomUseCase.execute(roomId);
+    if (!room) throw new Error("Room not found");
+    const meta = room.metadata;
+
+    const generated = await container.triviaAIService.generateQuestion(
+      meta.category as string,
+      meta.difficulty as string,
+    );
+
+    const questionData = {
+      question: generated.question,
+      options: generated.options,
+      correctIndex: generated.correctIndex,
+      category: meta.category as string,
+      difficulty: meta.difficulty as string,
+      funFact: generated.funFact,
+    };
+
+    const updated = await container.updateGameRoomUseCase.mergeMetadata(roomId, {
+      currentQuestion: JSON.stringify(questionData),
+      currentRound: 1,
+      questionSentAt: new Date().toISOString(),
+      player1Answer: null,
+      player2Answer: null,
+      player1Time: null,
+      player2Time: null,
+    });
+
+    return { room: updated, question: questionData };
   });
 }

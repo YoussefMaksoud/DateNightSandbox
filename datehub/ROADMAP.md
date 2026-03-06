@@ -93,3 +93,13 @@
 - [ ] Achievement system / date night streaks
 - [ ] Seasonal map themes / event decorations
 - [ ] Voice chat integration
+
+
+
+- implement to-do feature to keep track of changes
+- Date night calendar (send us a text 2 days before)
+- Escape room activity
+- room joining trivia, paint studio
+- photo upload and paper color in scrapbook
+- Photobooth type thing for date night picture. (locket as inspiration)
+- Go back to map needs to be go back to dashboard if coming from dashboard.

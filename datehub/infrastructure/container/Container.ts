@@ -51,6 +51,17 @@ import { SubmitAnswerUseCase } from "@/application/use-cases/trivia/SubmitAnswer
 import { ScoreRoundUseCase } from "@/application/use-cases/trivia/ScoreRoundUseCase";
 import { SaveTriviaResultUseCase } from "@/application/use-cases/trivia/SaveTriviaResultUseCase";
 import { GetTriviaLeaderboardUseCase } from "@/application/use-cases/trivia/GetTriviaLeaderboardUseCase";
+import { IGameRoomRepository } from "@/domain/repositories";
+import { IGameRoomFactory } from "@/domain/factories/IGameRoomFactory";
+import { PrismaGameRoomRepository } from "@/infrastructure/repositories/PrismaGameRoomRepository";
+import { RaceGameRoomFactory } from "@/infrastructure/factories/RaceGameRoomFactory";
+import { TriviaGameRoomFactory } from "@/infrastructure/factories/TriviaGameRoomFactory";
+import { PaintingGameRoomFactory } from "@/infrastructure/factories/PaintingGameRoomFactory";
+import { CreateGameRoomUseCase } from "@/application/use-cases/game-room/CreateGameRoomUseCase";
+import { JoinGameRoomUseCase } from "@/application/use-cases/game-room/JoinGameRoomUseCase";
+import { ReadyUpUseCase } from "@/application/use-cases/game-room/ReadyUpUseCase";
+import { GetGameRoomUseCase } from "@/application/use-cases/game-room/GetGameRoomUseCase";
+import { UpdateGameRoomUseCase } from "@/application/use-cases/game-room/UpdateGameRoomUseCase";
 
 class Container {
   private _activityRepository?: IActivityRepository;
@@ -64,6 +75,8 @@ class Container {
   private _raceRepository?: IRaceRepository;
   private _triviaRepository?: ITriviaRepository;
   private _triviaAIService?: ITriviaAIService;
+  private _gameRoomRepository?: IGameRoomRepository;
+  private _gameRoomFactories?: Map<string, IGameRoomFactory>;
 
   get activityRepository(): IActivityRepository {
     if (!this._activityRepository) {
@@ -140,6 +153,25 @@ class Container {
       this._triviaAIService = new OpenAITriviaAdapter();
     }
     return this._triviaAIService;
+  }
+
+  get gameRoomRepository(): IGameRoomRepository {
+    if (!this._gameRoomRepository) {
+      this._gameRoomRepository = new PrismaGameRoomRepository();
+    }
+    return this._gameRoomRepository;
+  }
+
+  get gameRoomFactories(): Map<string, IGameRoomFactory> {
+    if (!this._gameRoomFactories) {
+      const factories: IGameRoomFactory[] = [
+        new RaceGameRoomFactory(),
+        new TriviaGameRoomFactory(),
+        new PaintingGameRoomFactory(),
+      ];
+      this._gameRoomFactories = new Map(factories.map((f) => [f.type, f]));
+    }
+    return this._gameRoomFactories;
   }
 
   get getAvatarUseCase(): GetAvatarUseCase {
@@ -275,6 +307,26 @@ class Container {
 
   get getTriviaLeaderboardUseCase(): GetTriviaLeaderboardUseCase {
     return new GetTriviaLeaderboardUseCase(this.triviaRepository);
+  }
+
+  get createGameRoomUseCase(): CreateGameRoomUseCase {
+    return new CreateGameRoomUseCase(this.gameRoomRepository, this.gameRoomFactories);
+  }
+
+  get joinGameRoomUseCase(): JoinGameRoomUseCase {
+    return new JoinGameRoomUseCase(this.gameRoomRepository);
+  }
+
+  get readyUpUseCase(): ReadyUpUseCase {
+    return new ReadyUpUseCase(this.gameRoomRepository);
+  }
+
+  get getGameRoomUseCase(): GetGameRoomUseCase {
+    return new GetGameRoomUseCase(this.gameRoomRepository);
+  }
+
+  get updateGameRoomUseCase(): UpdateGameRoomUseCase {
+    return new UpdateGameRoomUseCase(this.gameRoomRepository);
   }
 }
 

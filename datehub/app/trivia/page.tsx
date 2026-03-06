@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useUser, UserButton } from "@clerk/nextjs";
+import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useGameRoom, GameRoomDto } from "@/hooks/useGameRoom";
 
 // --- Types ---
 
@@ -17,34 +18,7 @@ interface TriviaQuestionDto {
   funFact: string;
 }
 
-interface TriviaRoomDto {
-  roomId: string;
-  player1Id: string;
-  player2Id: string | null;
-  player1Ready: boolean;
-  player2Ready: boolean;
-  category: string;
-  difficulty: string;
-  mode: string;
-  status: string;
-  currentRound: number;
-  totalRounds: number;
-  player1Score: number;
-  player2Score: number;
-  player1Streak: number;
-  player2Streak: number;
-  player1Lives: number;
-  player2Lives: number;
-  currentQuestion: TriviaQuestionDto | null;
-  questionSentAt: string | null;
-  player1Answer: string | null;
-  player2Answer: string | null;
-  player1Time: number | null;
-  player2Time: number | null;
-  startedAt: string | null;
-}
-
-type View = "lobby" | "countdown" | "playing" | "round-result" | "game-over";
+type GameView = "playing" | "round-result" | "game-over";
 
 // --- Constants ---
 
@@ -77,25 +51,27 @@ const MODES = [
 // --- Main ---
 
 export default function TriviaPage() {
-  const { user, isLoaded } = useUser();
+  const {
+    room, phase, countdown, creating, joining, error,
+    isLoaded, userId, isPlayer1,
+    createRoom, joinRoom, readyUp, startSolo, refreshRoom, resetRoom,
+  } = useGameRoom("trivia", {
+    onGameStart: (roomData) => startGame(roomData),
+  });
 
-  const [view, setView] = useState<View>("lobby");
-  const [room, setRoom] = useState<TriviaRoomDto | null>(null);
   const [category, setCategory] = useState("general");
   const [difficulty, setDifficulty] = useState("medium");
   const [mode, setMode] = useState("classic");
   const [totalRounds, setTotalRounds] = useState(10);
   const [joinCode, setJoinCode] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [joining, setJoining] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [gameView, setGameView] = useState<GameView | null>(null);
 
   // Game state
   const [question, setQuestion] = useState<TriviaQuestionDto | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
   const [timeLeft, setTimeLeft] = useState(20);
-  const [countdown, setCountdown] = useState(3);
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -117,113 +93,38 @@ export default function TriviaPage() {
   const questionTimeRef = useRef(0);
   const pollRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
-  const getTimeLimit = useCallback(() => {
-    const m = MODES.find((md) => md.id === (room?.mode ?? mode));
-    return m?.timeLimit ?? 20;
-  }, [room, mode]);
+  // Metadata helper
+  const meta = room?.metadata ?? {};
 
-  // --- Lobby ---
+  const getTimeLimit = useCallback(() => {
+    const currentMode = (meta.mode as string) ?? mode;
+    const m = MODES.find((md) => md.id === currentMode);
+    return m?.timeLimit ?? 20;
+  }, [meta.mode, mode]);
+
+  // --- Lobby handlers ---
 
   async function handleCreateSolo() {
-    setCreating(true);
-    const res = await fetch("/api/trivia/room", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ category, difficulty, mode, totalRounds }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setRoom(data.room);
-      startCountdown(data.room);
-    }
-    setCreating(false);
+    await startSolo({ category, difficulty, mode, totalRounds });
   }
 
   async function handleCreate() {
-    setCreating(true);
-    const res = await fetch("/api/trivia/room", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ category, difficulty, mode, totalRounds }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setRoom(data.room);
-    }
-    setCreating(false);
+    await createRoom({ category, difficulty, mode, totalRounds });
   }
 
-  async function handleJoin() {
+  async function handleJoinRoom() {
     if (!joinCode.trim()) return;
-    setJoining(true);
-    const res = await fetch("/api/trivia/room/join", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roomId: joinCode.trim() }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setRoom(data.room);
-    }
-    setJoining(false);
+    await joinRoom(joinCode.trim());
   }
 
   async function handleReady() {
-    if (!room) return;
-    const res = await fetch("/api/trivia/room/ready", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roomId: room.roomId, ready: true }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setRoom(data.room);
-    }
-  }
-
-  // Poll room state in lobby (2-player mode)
-  useEffect(() => {
-    if (!room || view !== "lobby" || !room.player2Id) return;
-    const interval = setInterval(async () => {
-      const res = await fetch(`/api/trivia/room?roomId=${room.roomId}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.room) {
-          setRoom(data.room);
-          if (data.room.player1Ready && data.room.player2Ready) {
-            clearInterval(interval);
-            startCountdown(data.room);
-          }
-        }
-      }
-    }, 500);
-    return () => clearInterval(interval);
-  }, [room?.roomId, room?.player2Id, view]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // --- Countdown ---
-
-  function startCountdown(roomData: TriviaRoomDto) {
-    setView("countdown");
-    setCountdown(3);
-    let count = 3;
-    const interval = setInterval(() => {
-      count--;
-      if (count > 0) {
-        setCountdown(count);
-      } else if (count === 0) {
-        setCountdown(0);
-      } else {
-        clearInterval(interval);
-        startGame(roomData);
-      }
-    }, 1000);
+    await readyUp();
   }
 
   // --- Game ---
 
-  async function startGame(roomData: TriviaRoomDto) {
-    setView("playing");
-    setRoom(roomData);
+  async function startGame(roomData: GameRoomDto) {
+    setGameView("playing");
     setPreviousQuestions([]);
     setMyBestStreak(0);
     setAnswerTimes([]);
@@ -251,7 +152,6 @@ export default function TriviaPage() {
 
     if (res.ok) {
       const data = await res.json();
-      setRoom(data.room);
       setQuestion(data.question);
       questionTimeRef.current = performance.now();
 
@@ -304,12 +204,12 @@ export default function TriviaPage() {
       await scoreRound(roomId);
     } else {
       pollRef.current = setInterval(async () => {
-        const res = await fetch(`/api/trivia/room?roomId=${roomId}`);
+        const res = await fetch(`/api/room?roomId=${roomId}`);
         if (res.ok) {
           const data = await res.json();
           if (data.room) {
-            setRoom(data.room);
-            if (data.room.player1Answer !== null && data.room.player2Answer !== null) {
+            const m = data.room.metadata;
+            if (m.player1Answer !== null && m.player2Answer !== null) {
               clearInterval(pollRef.current);
               await scoreRound(roomId);
             }
@@ -328,7 +228,8 @@ export default function TriviaPage() {
 
     if (res.ok) {
       const data = await res.json();
-      setRoom(data.room);
+      await refreshRoom();
+
       setRoundResult({
         player1Correct: data.player1Correct,
         player2Correct: data.player2Correct,
@@ -337,33 +238,32 @@ export default function TriviaPage() {
         gameOver: data.gameOver,
       });
 
-      const amP1 = data.room.player1Id === user?.id;
-      const streak = amP1 ? data.room.player1Streak : data.room.player2Streak;
+      const m = data.room.metadata;
+      const streak = isPlayer1 ? (m.player1Streak as number) : (m.player2Streak as number);
       if (streak > myBestStreak) setMyBestStreak(streak);
 
       if (question) {
         setPreviousQuestions((prev) => [...prev, question.question]);
       }
 
-      setView("round-result");
+      setGameView("round-result");
 
       if (data.gameOver) {
-        setTimeout(() => setView("game-over"), 3000);
+        setTimeout(() => setGameView("game-over"), 3000);
       }
     }
   }
 
   function handleNextRound() {
     if (!room) return;
-    setView("playing");
+    setGameView("playing");
     loadNextQuestion(room.roomId, previousQuestions);
   }
 
   async function handleSaveResult() {
     if (!room || resultSaved) return;
-    const amP1 = room.player1Id === user?.id;
-    const score = amP1 ? room.player1Score : room.player2Score;
-    const opp = amP1 ? room.player2Score : room.player1Score;
+    const score = isPlayer1 ? (meta.player1Score as number) : (meta.player2Score as number);
+    const opp = isPlayer1 ? (meta.player2Score as number) : (meta.player1Score as number);
     const avgTime = answerTimes.length > 0 ? answerTimes.reduce((a, b) => a + b, 0) / answerTimes.length : 0;
 
     await fetch("/api/trivia/result", {
@@ -371,11 +271,11 @@ export default function TriviaPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         roomId: room.roomId,
-        category: room.category,
-        mode: room.mode,
-        difficulty: room.difficulty,
+        category: meta.category as string,
+        mode: meta.mode as string,
+        difficulty: meta.difficulty as string,
         score,
-        totalRounds: room.currentRound,
+        totalRounds: meta.currentRound as number,
         bestStreak: myBestStreak,
         avgTime: Math.round(avgTime * 100) / 100,
         won: !room.player2Id || score > opp,
@@ -385,8 +285,8 @@ export default function TriviaPage() {
   }
 
   function handlePlayAgain() {
-    setView("lobby");
-    setRoom(null);
+    resetRoom();
+    setGameView(null);
     setQuestion(null);
     setSelectedAnswer(null);
     setAnswered(false);
@@ -419,12 +319,15 @@ export default function TriviaPage() {
 
   // --- Computed ---
 
-  const amP1 = room?.player1Id === user?.id;
-  const myScore = room ? (amP1 ? room.player1Score : room.player2Score) : 0;
-  const oppScore = room ? (amP1 ? room.player2Score : room.player1Score) : 0;
-  const myStreak = room ? (amP1 ? room.player1Streak : room.player2Streak) : 0;
-  const myLives = room ? (amP1 ? room.player1Lives : room.player2Lives) : 3;
-  const myCorrect = roundResult ? (amP1 ? roundResult.player1Correct : roundResult.player2Correct) : false;
+  const myScore = meta.player1Score !== undefined
+    ? (isPlayer1 ? (meta.player1Score as number) : (meta.player2Score as number))
+    : 0;
+  const oppScore = meta.player1Score !== undefined
+    ? (isPlayer1 ? (meta.player2Score as number) : (meta.player1Score as number))
+    : 0;
+  const myStreak = isPlayer1 ? ((meta.player1Streak as number) ?? 0) : ((meta.player2Streak as number) ?? 0);
+  const myLives = isPlayer1 ? ((meta.player1Lives as number) ?? 3) : ((meta.player2Lives as number) ?? 3);
+  const myCorrect = roundResult ? (isPlayer1 ? roundResult.player1Correct : roundResult.player2Correct) : false;
   const timeLimit = getTimeLimit();
 
   return (
@@ -454,7 +357,7 @@ export default function TriviaPage() {
 
       <main className="relative z-10 mx-auto max-w-5xl px-6 py-8">
         {/* --- LOBBY VIEW --- */}
-        {view === "lobby" && (
+        {(phase === "idle" || phase === "lobby") && !gameView && (
           <div className="space-y-8">
             <div className="text-center">
               <h1 className="text-3xl font-bold">🧩 Trivia Tower</h1>
@@ -606,7 +509,7 @@ export default function TriviaPage() {
                       placeholder="Room code"
                       className="flex-1 rounded-lg border border-white/[0.1] bg-white/[0.03] px-3 py-2 text-sm text-white placeholder-zinc-600 focus:border-orange-500 focus:outline-none"
                     />
-                    <Button onClick={handleJoin} disabled={joining || !joinCode.trim()} className="bg-blue-600 hover:bg-blue-700">
+                    <Button onClick={handleJoinRoom} disabled={joining || !joinCode.trim()} className="bg-blue-600 hover:bg-blue-700">
                       Join
                     </Button>
                   </div>
@@ -620,13 +523,13 @@ export default function TriviaPage() {
                     <h2 className="text-xl font-bold">Room: <span className="text-orange-400">{room.roomId}</span></h2>
                     <p className="mt-1 text-sm text-zinc-500">Share this code with your partner</p>
                     <div className="mt-3 flex items-center justify-center gap-4 text-sm text-zinc-400">
-                      <span>{CATEGORIES.find((c) => c.id === room.category)?.emoji} {room.category}</span>
+                      <span>{CATEGORIES.find((c) => c.id === (meta.category as string))?.emoji} {meta.category as string}</span>
                       <span>·</span>
-                      <span>{room.difficulty}</span>
+                      <span>{meta.difficulty as string}</span>
                       <span>·</span>
-                      <span>{room.mode}</span>
+                      <span>{meta.mode as string}</span>
                       <span>·</span>
-                      <span>{room.totalRounds} rounds</span>
+                      <span>{meta.totalRounds as number} rounds</span>
                     </div>
                   </div>
 
@@ -635,7 +538,7 @@ export default function TriviaPage() {
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">🧠</span>
                         <div>
-                          <p className="font-semibold">{room.player1Id === user?.id ? "You" : "Player 1"}</p>
+                          <p className="font-semibold">{isPlayer1 ? "You" : "Player 1"}</p>
                           <p className="text-xs text-zinc-500">{room.player1Ready ? "✅ Ready" : "⏳ Waiting"}</p>
                         </div>
                       </div>
@@ -644,7 +547,7 @@ export default function TriviaPage() {
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{room.player2Id ? "🧠" : "❓"}</span>
                         <div>
-                          <p className="font-semibold">{room.player2Id ? (room.player2Id === user?.id ? "You" : "Player 2") : "Waiting for opponent…"}</p>
+                          <p className="font-semibold">{room.player2Id ? (room.player2Id === userId ? "You" : "Player 2") : "Waiting for opponent…"}</p>
                           <p className="text-xs text-zinc-500">{room.player2Id ? (room.player2Ready ? "✅ Ready" : "⏳ Waiting") : "—"}</p>
                         </div>
                       </div>
@@ -653,8 +556,8 @@ export default function TriviaPage() {
 
                   {room.player2Id && (
                     <div className="text-center">
-                      {((room.player1Id === user?.id && !room.player1Ready) ||
-                        (room.player2Id === user?.id && !room.player2Ready)) ? (
+                      {((isPlayer1 && !room.player1Ready) ||
+                        (room.player2Id === userId && !room.player2Ready)) ? (
                         <Button onClick={handleReady} className="bg-orange-600 px-8 hover:bg-orange-700">
                           Ready Up!
                         </Button>
@@ -670,7 +573,7 @@ export default function TriviaPage() {
         )}
 
         {/* --- COUNTDOWN VIEW --- */}
-        {view === "countdown" && (
+        {phase === "countdown" && !gameView && (
           <div className="flex min-h-[60vh] items-center justify-center">
             <div className="text-center">
               <div
@@ -688,13 +591,13 @@ export default function TriviaPage() {
         )}
 
         {/* --- PLAYING VIEW --- */}
-        {view === "playing" && (
+        {gameView === "playing" && (
           <div className="space-y-6">
             {/* Status bar */}
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <span className="rounded-full bg-orange-500/10 px-3 py-1 text-sm font-semibold text-orange-400">
-                  Round {room?.currentRound ?? 0} / {room?.totalRounds ?? 10}
+                  Round {(meta.currentRound as number) ?? 0} / {(meta.totalRounds as number) ?? 10}
                 </span>
                 <span className="text-sm font-bold text-white">
                   Score: <span className="text-orange-400">{myScore}</span>
@@ -711,7 +614,7 @@ export default function TriviaPage() {
                     🔥 {myStreak} streak!
                   </span>
                 )}
-                {room?.mode === "survival" && (
+                {(meta.mode as string) === "survival" && (
                   <span className="text-sm">
                     {Array.from({ length: Math.max(0, myLives) }).map((_, i) => <span key={i}>❤️</span>)}
                     {Array.from({ length: Math.max(0, 3 - myLives) }).map((_, i) => <span key={i} className="opacity-20">❤️</span>)}
@@ -786,7 +689,7 @@ export default function TriviaPage() {
         )}
 
         {/* --- ROUND RESULT VIEW --- */}
-        {view === "round-result" && roundResult && (
+        {gameView === "round-result" && roundResult && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="text-5xl">{myCorrect ? "✅" : "❌"}</div>
@@ -827,7 +730,7 @@ export default function TriviaPage() {
                         <p className="text-xs text-zinc-500">Opponent</p>
                         <p className="text-2xl font-bold text-blue-400">{oppScore}</p>
                         <p className="mt-1 text-xs text-zinc-500">
-                          {amP1
+                          {isPlayer1
                             ? (roundResult.player2Correct ? "✅ Correct" : "❌ Wrong")
                             : (roundResult.player1Correct ? "✅ Correct" : "❌ Wrong")}
                         </p>
@@ -849,7 +752,7 @@ export default function TriviaPage() {
         )}
 
         {/* --- GAME OVER VIEW --- */}
-        {view === "game-over" && room && (
+        {gameView === "game-over" && room && (
           <div className="space-y-8">
             <div className="text-center">
               <div className="text-6xl">🏆</div>
@@ -895,7 +798,7 @@ export default function TriviaPage() {
                     <p className="text-[11px] text-zinc-500">Best Streak</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-emerald-400">{room.currentRound}</p>
+                    <p className="text-2xl font-bold text-emerald-400">{(meta.currentRound as number) ?? 0}</p>
                     <p className="text-[11px] text-zinc-500">Rounds Played</p>
                   </div>
                   <div className="text-center">

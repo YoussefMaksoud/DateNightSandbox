@@ -7,3 +7,4 @@ export type { IVehicleBuildRepository, VehicleBuildRecord } from "./IVehicleBuil
 export type { IPaintingSessionRepository } from "./IPaintingSessionRepository";
 export type { IRaceRepository } from "./IRaceRepository";
 export type { ITriviaRepository } from "./ITriviaRepository";
+export type { IGameRoomRepository } from "./IGameRoomRepository";

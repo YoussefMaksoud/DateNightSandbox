@@ -15,7 +15,16 @@ export async function POST(request: NextRequest) {
     const user = await requireAuth();
     const body = await request.json();
     const { roomId, answer, timeTaken } = answerSchema.parse(body);
-    const room = await container.submitAnswerUseCase.execute(roomId, user.userId, answer, timeTaken);
-    return { room };
+
+    const room = await container.getGameRoomUseCase.execute(roomId);
+    if (!room) throw new Error("Room not found");
+    const isP1 = room.player1Id === user.userId;
+
+    const updates = isP1
+      ? { player1Answer: answer, player1Time: timeTaken }
+      : { player2Answer: answer, player2Time: timeTaken };
+
+    const updated = await container.updateGameRoomUseCase.mergeMetadata(roomId, updates);
+    return { room: updated };
   });
 }

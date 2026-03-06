@@ -24,3 +24,4 @@ export type {
   TriviaResultDto,
   TriviaLeaderboardEntryDto,
 } from "./TriviaDtos";
+export type { GameRoomDto, CreateGameRoomDto } from "./GameRoomDtos";

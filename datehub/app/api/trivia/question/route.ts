@@ -14,7 +14,36 @@ export async function POST(request: NextRequest) {
     await requireAuth();
     const body = await request.json();
     const { roomId, previousQuestions } = generateSchema.parse(body);
-    const result = await container.generateQuestionUseCase.execute(roomId, previousQuestions);
-    return result;
+
+    const room = await container.getGameRoomUseCase.execute(roomId);
+    if (!room) throw new Error("Room not found");
+    const meta = room.metadata;
+
+    const generated = await container.triviaAIService.generateQuestion(
+      meta.category as string,
+      meta.difficulty as string,
+      previousQuestions,
+    );
+
+    const questionData = {
+      question: generated.question,
+      options: generated.options,
+      correctIndex: generated.correctIndex,
+      category: meta.category as string,
+      difficulty: meta.difficulty as string,
+      funFact: generated.funFact,
+    };
+
+    const updated = await container.updateGameRoomUseCase.mergeMetadata(roomId, {
+      currentQuestion: JSON.stringify(questionData),
+      currentRound: (meta.currentRound as number ?? 0) + 1,
+      questionSentAt: new Date().toISOString(),
+      player1Answer: null,
+      player2Answer: null,
+      player1Time: null,
+      player2Time: null,
+    });
+
+    return { room: updated, question: questionData };
   });
 }

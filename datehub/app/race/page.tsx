@@ -1,29 +1,13 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useUser, UserButton } from "@clerk/nextjs";
+import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useGameRoom, GameRoomDto } from "@/hooks/useGameRoom";
 
 // --- Types ---
-
-interface RaceRoomDto {
-  roomId: string;
-  player1Id: string;
-  player2Id: string | null;
-  player1Ready: boolean;
-  player2Ready: boolean;
-  lapCount: number;
-  status: string;
-  player1Lap: number;
-  player2Lap: number;
-  player1T: number;
-  player2T: number;
-  player1Time: number | null;
-  player2Time: number | null;
-  startedAt: string | null;
-}
 
 interface VehicleStats {
   speed: number;
@@ -40,7 +24,7 @@ interface VehicleBuildDto {
   stats: VehicleStats;
 }
 
-type View = "lobby" | "countdown" | "racing" | "results";
+type View = "racing" | "results";
 
 // --- Track geometry ---
 
@@ -105,16 +89,17 @@ function toCanvas(x: number, y: number) {
 // --- Main component ---
 
 export default function RacePage() {
-  const { user, isLoaded } = useUser();
+  const {
+    room, phase, countdown, creating, joining, error, isLoaded, userId,
+    isPlayer1, createRoom, joinRoom, readyUp, refreshRoom, resetRoom, setRoom, setPhase,
+  } = useGameRoom("race", {
+    onGameStart: (roomData) => startRace(roomData),
+  });
 
-  const [view, setView] = useState<View>("lobby");
-  const [room, setRoom] = useState<RaceRoomDto | null>(null);
+  const [view, setView] = useState<View | null>(null);
   const [myBuild, setMyBuild] = useState<VehicleBuildDto | null>(null);
   const [lapCount, setLapCount] = useState(3);
   const [joinCode, setJoinCode] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [joining, setJoining] = useState(false);
-  const [countdown, setCountdown] = useState(3);
   const [raceTime, setRaceTime] = useState(0);
   const [myFinishTime, setMyFinishTime] = useState<number | null>(null);
   const [opponentFinishTime, setOpponentFinishTime] = useState<number | null>(null);
@@ -143,100 +128,32 @@ export default function RacePage() {
 
   // Fetch vehicle build
   useEffect(() => {
-    if (!isLoaded || !user) return;
+    if (!isLoaded || !userId) return;
     fetch("/api/vehicle-build")
       .then((r) => r.json())
       .then((d) => setMyBuild(d.build))
       .catch(() => {});
-  }, [isLoaded, user]);
+  }, [isLoaded, userId]);
 
   // --- Lobby ---
 
   async function handleCreate() {
-    setCreating(true);
-    const res = await fetch("/api/race/room", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lapCount }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setRoom(data.room);
-    }
-    setCreating(false);
+    await createRoom({ lapCount });
   }
 
   async function handleJoin() {
     if (!joinCode.trim()) return;
-    setJoining(true);
-    const res = await fetch("/api/race/room/join", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roomId: joinCode.trim() }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setRoom(data.room);
-    }
-    setJoining(false);
+    await joinRoom(joinCode.trim());
   }
 
   async function handleReady() {
-    if (!room) return;
-    const res = await fetch("/api/race/room/ready", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roomId: room.roomId, ready: true }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setRoom(data.room);
-    }
-  }
-
-  // Poll room state in lobby
-  useEffect(() => {
-    if (!room || view !== "lobby") return;
-    const interval = setInterval(async () => {
-      const res = await fetch(`/api/race/room?roomId=${room.roomId}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.room) {
-          setRoom(data.room);
-          if (data.room.player1Ready && data.room.player2Ready && data.room.player2Id) {
-            clearInterval(interval);
-            startCountdown(data.room);
-          }
-        }
-      }
-    }, 500);
-    return () => clearInterval(interval);
-  }, [room?.roomId, view]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // --- Countdown ---
-
-  function startCountdown(roomData: RaceRoomDto) {
-    setView("countdown");
-    setCountdown(3);
-    let count = 3;
-    const interval = setInterval(() => {
-      count--;
-      if (count > 0) {
-        setCountdown(count);
-      } else if (count === 0) {
-        setCountdown(0);
-      } else {
-        clearInterval(interval);
-        startRace(roomData);
-      }
-    }, 1000);
+    await readyUp();
   }
 
   // --- Racing ---
 
-  function startRace(roomData: RaceRoomDto) {
+  function startRace(roomData: GameRoomDto) {
     setView("racing");
-    setRoom(roomData);
 
     // Update server status
     fetch("/api/race/room/update", {
@@ -276,18 +193,18 @@ export default function RacePage() {
 
     // Opponent poll
     pollRef.current = setInterval(async () => {
-      const res = await fetch(`/api/race/room?roomId=${roomData.roomId}`);
+      const res = await fetch(`/api/room?roomId=${roomData.roomId}`);
       if (res.ok) {
         const data = await res.json();
         if (data.room) {
-          const r = data.room as RaceRoomDto;
-          const isP1 = r.player1Id === user?.id;
-          game.opponentLap = isP1 ? r.player2Lap : r.player1Lap;
-          const oppTime = isP1 ? r.player2Time : r.player1Time;
+          const r = data.room as GameRoomDto;
+          const isP1 = r.player1Id === userId;
+          game.opponentLap = isP1 ? (r.metadata.player2Lap as number) ?? 0 : (r.metadata.player1Lap as number) ?? 0;
+          const oppTime = isP1 ? (r.metadata.player2Time as number | null) ?? null : (r.metadata.player1Time as number | null) ?? null;
           if (oppTime !== null) {
             setOpponentFinishTime(oppTime);
           }
-          const oppT = isP1 ? r.player2T : r.player1T;
+          const oppT = isP1 ? (r.metadata.player2T as number) ?? 0 : (r.metadata.player1T as number) ?? 0;
           game.opponentTargetT = oppT;
 
           if (r.status === "finished") {
@@ -348,7 +265,7 @@ export default function RacePage() {
       }
 
       // Check finish
-      if (game.myLap >= (room?.lapCount ?? 3)) {
+      if (game.myLap >= ((room?.metadata?.lapCount as number) ?? 3)) {
         game.finished = true;
         game.finishTime = (performance.now() - game.startTime) / 1000;
         setMyFinishTime(game.finishTime);
@@ -374,7 +291,7 @@ export default function RacePage() {
     draw(game);
 
     animFrameRef.current = requestAnimationFrame(gameLoop);
-  }, [myBuild, room, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [myBuild, room, userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function draw(game: typeof gameRef.current) {
     const canvas = canvasRef.current;
@@ -490,7 +407,7 @@ export default function RacePage() {
   }
 
   function drawHUD(ctx: CanvasRenderingContext2D, game: typeof gameRef.current) {
-    const laps = room?.lapCount ?? 3;
+    const laps = (room?.metadata?.lapCount as number) ?? 3;
     const currentLap = Math.min(game.myLap + 1, laps);
     const elapsed = (performance.now() - game.startTime) / 1000;
 
@@ -565,7 +482,7 @@ export default function RacePage() {
     ctx.fill();
   }
 
-  function endRace(roomData: RaceRoomDto) {
+  function endRace(roomData: GameRoomDto) {
     cleanup();
     setRoom(roomData);
     setView("results");
@@ -609,15 +526,14 @@ export default function RacePage() {
 
   async function handleSaveResult() {
     if (!room || !myFinishTime || resultSaved) return;
-    const isP1 = room.player1Id === user?.id;
-    const oppTime = isP1 ? room.player2Time : room.player1Time;
+    const oppTime = isPlayer1 ? (room.metadata.player2Time as number | null) ?? null : (room.metadata.player1Time as number | null) ?? null;
     const won = oppTime === null || myFinishTime < oppTime;
     await fetch("/api/race/result", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         roomId: room.roomId,
-        lapCount: room.lapCount,
+        lapCount: (room.metadata.lapCount as number) ?? 3,
         finishTime: myFinishTime,
         won,
       }),
@@ -626,13 +542,12 @@ export default function RacePage() {
   }
 
   function handleRaceAgain() {
-    setView("lobby");
-    setRoom(null);
+    resetRoom();
+    setView(null);
     setMyFinishTime(null);
     setOpponentFinishTime(null);
     setResultSaved(false);
     setRaceTime(0);
-    setCountdown(3);
   }
 
   // --- Loading ---
@@ -674,7 +589,7 @@ export default function RacePage() {
 
       <main className="relative z-10 mx-auto max-w-5xl px-6 py-8">
         {/* --- LOBBY VIEW --- */}
-        {view === "lobby" && (
+        {(phase === "idle" || phase === "lobby") && !view && (
           <div className="space-y-8">
             <div className="text-center">
               <h1 className="text-3xl font-bold">🏁 Race Lobby</h1>
@@ -779,7 +694,7 @@ export default function RacePage() {
                   <div className="text-center">
                     <h2 className="text-xl font-bold">Room: <span className="text-emerald-400">{room.roomId}</span></h2>
                     <p className="mt-1 text-sm text-zinc-500">Share this code with your opponent</p>
-                    <p className="mt-2 text-sm text-zinc-400">Laps: {room.lapCount}</p>
+                    <p className="mt-2 text-sm text-zinc-400">Laps: {(room.metadata.lapCount as number) ?? 3}</p>
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2">
@@ -788,7 +703,7 @@ export default function RacePage() {
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">🏎️</span>
                         <div>
-                          <p className="font-semibold">{room.player1Id === user?.id ? "You" : "Player 1"}</p>
+                          <p className="font-semibold">{room.player1Id === userId ? "You" : "Player 1"}</p>
                           <p className="text-xs text-zinc-500">{room.player1Ready ? "✅ Ready" : "⏳ Waiting"}</p>
                         </div>
                       </div>
@@ -799,7 +714,7 @@ export default function RacePage() {
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{room.player2Id ? "🏎️" : "❓"}</span>
                         <div>
-                          <p className="font-semibold">{room.player2Id ? (room.player2Id === user?.id ? "You" : "Player 2") : "Waiting for opponent…"}</p>
+                          <p className="font-semibold">{room.player2Id ? (room.player2Id === userId ? "You" : "Player 2") : "Waiting for opponent…"}</p>
                           <p className="text-xs text-zinc-500">
                             {room.player2Id ? (room.player2Ready ? "✅ Ready" : "⏳ Waiting") : "—"}
                           </p>
@@ -810,8 +725,8 @@ export default function RacePage() {
 
                   {room.player2Id && (
                     <div className="text-center">
-                      {((room.player1Id === user?.id && !room.player1Ready) ||
-                        (room.player2Id === user?.id && !room.player2Ready)) ? (
+                      {((room.player1Id === userId && !room.player1Ready) ||
+                        (room.player2Id === userId && !room.player2Ready)) ? (
                         <Button onClick={handleReady} className="bg-emerald-600 px-8 hover:bg-emerald-700">
                           Ready Up!
                         </Button>
@@ -827,7 +742,7 @@ export default function RacePage() {
         )}
 
         {/* --- COUNTDOWN VIEW --- */}
-        {view === "countdown" && (
+        {phase === "countdown" && !view && (
           <div className="flex min-h-[60vh] items-center justify-center">
             <div className="text-center">
               <div

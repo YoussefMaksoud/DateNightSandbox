@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const user = await requireAuth();
     const body = await request.json();
     const options = createSchema.parse(body);
-    const room = await container.createTriviaRoomUseCase.execute(user.userId, options);
+    const room = await container.createGameRoomUseCase.execute(user.userId, "trivia", options);
     return { room };
   }, 201);
 }
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     await requireAuth();
     const roomId = request.nextUrl.searchParams.get("roomId");
     if (!roomId) throw new Error("roomId required");
-    const room = await container.getTriviaRoomUseCase.execute(roomId);
+    const room = await container.getGameRoomUseCase.execute(roomId);
     return { room };
   });
 }

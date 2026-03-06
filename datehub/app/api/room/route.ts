@@ -5,15 +5,16 @@ import { handleApiRequest } from "@/lib/api-handler";
 import { requireAuth } from "@/lib/auth-middleware";
 
 const createSchema = z.object({
-  lapCount: z.number().min(1).max(10).default(3),
+  type: z.string().min(1),
+  config: z.record(z.unknown()).default({}),
 });
 
 export async function POST(request: NextRequest) {
   return handleApiRequest(async () => {
     const user = await requireAuth();
     const body = await request.json();
-    const { lapCount } = createSchema.parse(body);
-    const room = await container.createRaceRoomUseCase.execute(user.userId, lapCount);
+    const { type, config } = createSchema.parse(body);
+    const room = await container.createGameRoomUseCase.execute(user.userId, type, config);
     return { room };
   }, 201);
 }

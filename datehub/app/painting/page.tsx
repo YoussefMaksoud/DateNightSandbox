@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useUser, UserButton } from "@clerk/nextjs";
+import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useGameRoom, GameRoomDto } from "@/hooks/useGameRoom";
 
 function proxyUrl(url: string): string {
   return `/api/painting-session/image?url=${encodeURIComponent(url)}`;
@@ -37,19 +38,73 @@ const THEMES = [
   { id: "sunset", label: "Sunset", emoji: "🌅" },
 ];
 
-type View = "setup" | "painting" | "history";
+type View = "setup" | "lobby" | "countdown" | "painting" | "history";
 
 export default function PaintingPage() {
-  const { user, isLoaded } = useUser();
-
   const [view, setView] = useState<View>("setup");
   const [difficulty, setDifficulty] = useState("beginner");
   const [theme, setTheme] = useState("landscape");
-  const [creating, setCreating] = useState(false);
   const [session, setSession] = useState<PaintingSessionDto | null>(null);
   const [sessions, setSessions] = useState<PaintingSessionDto[]>([]);
   const [savingStatus, setSavingStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
+  const [soloCreating, setSoloCreating] = useState(false);
+
+  const {
+    room, phase, countdown, creating, joining, error, isLoaded, userId,
+    createRoom, joinRoom, readyUp, updateMetadata, resetRoom,
+  } = useGameRoom("painting", {
+    onGameStart: async (gameRoom: GameRoomDto) => {
+      if (gameRoom.player1Id === userId) {
+        const res = await fetch("/api/painting-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            difficulty: gameRoom.metadata.difficulty as string,
+            theme: gameRoom.metadata.theme as string,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSession(data.session);
+          await updateMetadata({
+            sessionId: data.session.id,
+            referenceUrl: data.session.referenceUrl,
+            palette: data.session.palette,
+          });
+        }
+      } else {
+        const poll = setInterval(async () => {
+          const res = await fetch(`/api/room?roomId=${gameRoom.roomId}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.room?.metadata?.referenceUrl) {
+              clearInterval(poll);
+              setSession({
+                id: data.room.metadata.sessionId as string,
+                userId: gameRoom.player1Id,
+                dateNightId: null,
+                difficulty: data.room.metadata.difficulty as string,
+                theme: data.room.metadata.theme as string,
+                referenceUrl: data.room.metadata.referenceUrl as string,
+                palette: data.room.metadata.palette as string[],
+                status: "active",
+                createdAt: new Date().toISOString(),
+              });
+            }
+          }
+        }, 500);
+      }
+      setView("painting");
+    },
+  });
+
+  // Sync phase → view for room-based flow
+  useEffect(() => {
+    if (phase === "lobby") setView("lobby");
+    else if (phase === "countdown") setView("countdown");
+  }, [phase]);
 
   const fetchSessions = useCallback(async () => {
     setLoadingHistory(true);
@@ -62,11 +117,11 @@ export default function PaintingPage() {
   }, []);
 
   useEffect(() => {
-    if (isLoaded && user) fetchSessions();
-  }, [isLoaded, user, fetchSessions]);
+    if (isLoaded && userId) fetchSessions();
+  }, [isLoaded, userId, fetchSessions]);
 
-  async function handleStartSession() {
-    setCreating(true);
+  async function handleStartSolo() {
+    setSoloCreating(true);
     const res = await fetch("/api/painting-session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -77,7 +132,22 @@ export default function PaintingPage() {
       setSession(data.session);
       setView("painting");
     }
-    setCreating(false);
+    setSoloCreating(false);
+  }
+
+  async function handleCreateRoom() {
+    const r = await createRoom({ difficulty, theme });
+    if (r) {
+      setView("lobby");
+    }
+  }
+
+  async function handleJoinRoom() {
+    if (!joinCode.trim()) return;
+    const r = await joinRoom(joinCode.trim());
+    if (r) {
+      setView("lobby");
+    }
   }
 
   async function handleUpdateStatus(status: "saved" | "completed") {
@@ -157,9 +227,9 @@ export default function PaintingPage() {
         {/* View tabs */}
         <div className="mb-8 flex gap-2">
           <button
-            onClick={() => setView("setup")}
+            onClick={() => { resetRoom(); setView("setup"); }}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
-              view === "setup" || view === "painting"
+              view === "setup" || view === "painting" || view === "lobby" || view === "countdown"
                 ? "bg-purple-500/15 text-purple-300 ring-1 ring-purple-500/30"
                 : "text-zinc-500 hover:text-zinc-300"
             }`}
@@ -242,24 +312,205 @@ export default function PaintingPage() {
               </CardContent>
             </Card>
 
-            {/* Start Button */}
-            <div className="flex justify-center">
-              <Button
-                variant="primary"
-                size="lg"
-                disabled={creating}
-                onClick={handleStartSession}
-                className="bg-purple-600 hover:bg-purple-700 active:bg-purple-800 focus:ring-purple-500 shadow-lg shadow-purple-500/25"
-              >
-                {creating ? (
-                  <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 animate-spin rounded-full border-[2px] border-white/30 border-t-white" />
-                    Preparing canvas…
+            {/* Start Buttons */}
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Solo / Create Room */}
+              <Card className="border-white/[0.06] bg-white/[0.02]">
+                <CardContent className="space-y-4 p-6">
+                  <h2 className="text-lg font-semibold text-white">Start Painting</h2>
+                  <div className="space-y-3">
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      disabled={soloCreating}
+                      onClick={handleStartSolo}
+                      className="w-full bg-purple-600 hover:bg-purple-700 active:bg-purple-800 focus:ring-purple-500 shadow-lg shadow-purple-500/25"
+                    >
+                      {soloCreating ? (
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-[2px] border-white/30 border-t-white" />
+                          Preparing canvas…
+                        </div>
+                      ) : (
+                        "🎨 Paint Solo"
+                      )}
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      disabled={creating}
+                      onClick={handleCreateRoom}
+                      className="w-full bg-violet-600 hover:bg-violet-700 active:bg-violet-800 focus:ring-violet-500"
+                    >
+                      {creating ? (
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-[2px] border-white/30 border-t-white" />
+                          Creating room…
+                        </div>
+                      ) : (
+                        "👥 Create Room"
+                      )}
+                    </Button>
                   </div>
-                ) : (
-                  "🎨 Start Paint Night"
+                </CardContent>
+              </Card>
+
+              {/* Join Room */}
+              <Card className="border-white/[0.06] bg-white/[0.02]">
+                <CardContent className="space-y-4 p-6">
+                  <h2 className="text-lg font-semibold text-white">Join Room</h2>
+                  <div>
+                    <label className="mb-2 block text-sm text-zinc-400">Room Code</label>
+                    <input
+                      type="text"
+                      value={joinCode}
+                      onChange={(e) => setJoinCode(e.target.value)}
+                      placeholder="Enter room code"
+                      className="w-full rounded-lg border border-white/[0.1] bg-white/[0.03] px-4 py-2 text-white placeholder-zinc-600 focus:border-purple-500 focus:outline-none"
+                    />
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={handleJoinRoom}
+                    disabled={joining || !joinCode.trim()}
+                    className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 focus:ring-blue-500"
+                  >
+                    {joining ? "Joining…" : "Join Room"}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {error && (
+              <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-center text-sm text-red-400">
+                {error}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* LOBBY VIEW */}
+        {view === "lobby" && room && (
+          <div className="space-y-8">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-white">🎨 Paint Lobby</h1>
+              <p className="mt-2 text-zinc-500">Waiting for your partner to join</p>
+            </div>
+
+            <Card className="border-white/[0.06] bg-white/[0.02]">
+              <CardContent className="space-y-6 p-6">
+                <div className="text-center">
+                  <h2 className="text-xl font-bold text-white">
+                    Room: <span className="text-purple-400">{room.roomId}</span>
+                  </h2>
+                  <p className="mt-1 text-sm text-zinc-500">Share this code with your partner</p>
+                  <p className="mt-2 text-sm text-zinc-400">
+                    {THEMES.find((t) => t.id === (room.metadata.theme as string))?.emoji}{" "}
+                    {(room.metadata.theme as string)?.replace("-", " ")} ·{" "}
+                    {DIFFICULTIES.find((d) => d.id === (room.metadata.difficulty as string))?.emoji}{" "}
+                    {room.metadata.difficulty as string}
+                  </p>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  {/* Player 1 */}
+                  <div
+                    className={`rounded-xl border p-4 ${
+                      room.player1Ready
+                        ? "border-purple-500/30 bg-purple-500/5"
+                        : "border-white/[0.06] bg-white/[0.02]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🎨</span>
+                      <div>
+                        <p className="font-semibold text-white">
+                          {room.player1Id === userId ? "You" : "Player 1"}
+                        </p>
+                        <p className="text-xs text-zinc-500">
+                          {room.player1Ready ? "✅ Ready" : "⏳ Waiting"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Player 2 */}
+                  <div
+                    className={`rounded-xl border p-4 ${
+                      room.player2Ready
+                        ? "border-violet-500/30 bg-violet-500/5"
+                        : "border-white/[0.06] bg-white/[0.02]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{room.player2Id ? "🎨" : "❓"}</span>
+                      <div>
+                        <p className="font-semibold text-white">
+                          {room.player2Id
+                            ? room.player2Id === userId
+                              ? "You"
+                              : "Player 2"
+                            : "Waiting for partner…"}
+                        </p>
+                        <p className="text-xs text-zinc-500">
+                          {room.player2Id
+                            ? room.player2Ready
+                              ? "✅ Ready"
+                              : "⏳ Waiting"
+                            : "—"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {room.player2Id && (
+                  <div className="text-center">
+                    {((room.player1Id === userId && !room.player1Ready) ||
+                      (room.player2Id === userId && !room.player2Ready)) ? (
+                      <Button
+                        onClick={readyUp}
+                        className="bg-purple-600 px-8 hover:bg-purple-700"
+                      >
+                        Ready Up!
+                      </Button>
+                    ) : (
+                      <p className="text-sm text-zinc-500">
+                        Waiting for both players to ready up…
+                      </p>
+                    )}
+                  </div>
                 )}
-              </Button>
+
+                {error && (
+                  <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-center text-sm text-red-400">
+                    {error}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* COUNTDOWN VIEW */}
+        {view === "countdown" && (
+          <div className="flex min-h-[60vh] items-center justify-center">
+            <div className="text-center">
+              <div
+                className="text-[120px] font-black transition-all"
+                style={{
+                  color: countdown === 0 ? "#A855F7" : "#ffffff",
+                  textShadow:
+                    countdown === 0
+                      ? "0 0 60px #A855F7"
+                      : "0 0 40px rgba(255,255,255,0.3)",
+                  animation: "pulse 0.5s ease-in-out",
+                }}
+              >
+                {countdown === 0 ? "GO!" : countdown}
+              </div>
+              <p className="mt-4 text-zinc-500">Get your brushes ready! 🖌️</p>
             </div>
           </div>
         )}
@@ -410,7 +661,7 @@ export default function PaintingPage() {
                           variant="secondary"
                           size="sm"
                           className="w-full"
-                          onClick={() => { setSession(null); setView("setup"); }}
+                          onClick={() => { setSession(null); resetRoom(); setView("setup"); }}
                         >
                           ← New Session
                         </Button>
@@ -425,7 +676,7 @@ export default function PaintingPage() {
                           variant="secondary"
                           size="sm"
                           className="w-full"
-                          onClick={() => { setSession(null); setView("setup"); }}
+                          onClick={() => { setSession(null); resetRoom(); setView("setup"); }}
                         >
                           ← Start New Session
                         </Button>
