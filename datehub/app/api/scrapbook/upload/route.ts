@@ -3,6 +3,10 @@ import { requireAuth } from "@/lib/auth-middleware";
 import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
 
+// Allow up to 5MB uploads on Vercel serverless
+export const runtime = "nodejs";
+export const maxDuration = 30;
+
 export async function POST(request: NextRequest) {
   try {
     await requireAuth();
@@ -26,10 +30,12 @@ export async function POST(request: NextRequest) {
     }
 
     const filename = `scrapbook/${randomUUID()}.${ext}`;
-    const blob = await put(filename, file, { access: "public" });
+    const blob = await put(filename, file, { access: "public", token: process.env.BLOB_READ_WRITE_TOKEN });
 
     return NextResponse.json({ url: blob.url }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+  } catch (err) {
+    console.error("Upload error:", err);
+    const message = err instanceof Error ? err.message : "Upload failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
