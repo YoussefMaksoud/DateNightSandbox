@@ -36,6 +36,7 @@ export interface ScrapbookData {
   name: string;
   coverUrl: string | null;
   shareToken: string | null;
+  canvasSize: number;
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;

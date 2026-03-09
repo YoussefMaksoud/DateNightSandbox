@@ -43,6 +43,7 @@ interface Scrapbook {
   id: string;
   name: string;
   shareToken: string | null;
+  canvasSize: number;
   pages: ScrapbookPage[];
 }
 
@@ -261,10 +262,20 @@ export default function ScrapbookEditorPage() {
   // Page flip
   const [flipDirection, setFlipDirection] = useState<"left" | "right" | null>(null);
 
-  // Canvas size
-  const [canvasSizeIdx, setCanvasSizeIdx] = useState(0);
+  // Canvas size (synced from scrapbook)
+  const canvasSizeIdx = scrapbook?.canvasSize ?? 0;
   const canvasDisplayW = CANVAS_SIZES[canvasSizeIdx].w;
   const canvasDisplayH = canvasDisplayW * (CANVAS_H / CANVAS_W);
+
+  async function updateCanvasSize(idx: number) {
+    if (!scrapbook) return;
+    setScrapbook((prev) => prev ? { ...prev, canvasSize: idx } : prev);
+    await fetch(`/api/scrapbook/${scrapbookId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ canvasSize: idx }),
+    });
+  }
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -610,13 +621,18 @@ export default function ScrapbookEditorPage() {
     const parsed = safeParseTextContent(item.content);
     isBusyRef.current = true;
     setEditingText(item.id);
-    setEditTextValue(parsed.text);
+    const isPlaceholder = parsed.text === "Double-click to edit" || parsed.text === "Your text here";
+    setEditTextValue(isPlaceholder ? "" : parsed.text);
     setTextFont(parsed.font);
     setTextColor(parsed.color);
     setTextSize(parsed.size);
     setTextBorder(parsed.border);
     setTextAlign(parsed.align as "left" | "center" | "right");
-    setTimeout(() => editInputRef.current?.focus(), 50);
+    setActivePanel("text");
+    setTimeout(() => {
+      editInputRef.current?.focus();
+      if (!isPlaceholder) editInputRef.current?.select();
+    }, 50);
   }
 
   async function finishTextEdit() {
@@ -949,14 +965,14 @@ export default function ScrapbookEditorPage() {
         )}
 
         {activePanel === "text" && (
-          <SidePanel title="Add Text">
+          <SidePanel title={editingText ? "Edit Text" : "Add Text"}>
             <div className="space-y-3">
               <div>
                 <label className="mb-1 block text-[10px] uppercase tracking-wider text-zinc-500">Font</label>
                 <div className="flex flex-wrap gap-1">
                   {FONTS.map((f) => (
                     <button key={f.name} onClick={() => setTextFont(f.value)}
-                      className={`rounded-md px-2 py-1 text-xs transition-all ${textFont === f.value ? "bg-rose-500/20 text-rose-400 ring-1 ring-rose-500/40" : "bg-white/[0.04] text-zinc-400 hover:bg-white/[0.08]"}`}
+                      className={`rounded-md px-2 py-1.5 text-xs transition-all ${textFont === f.value ? "bg-rose-500/20 text-rose-400 ring-1 ring-rose-500/40" : "bg-white/[0.04] text-zinc-400 hover:bg-white/[0.08]"}`}
                       style={{ fontFamily: f.value }}>{f.name}</button>
                   ))}
                 </div>
@@ -966,21 +982,21 @@ export default function ScrapbookEditorPage() {
                 <div className="flex flex-wrap gap-1.5">
                   {TEXT_COLORS.map((c) => (
                     <button key={c} onClick={() => setTextColor(c)}
-                      className={`h-6 w-6 rounded-full border-2 transition-all ${textColor === c ? "border-rose-500 scale-110" : "border-zinc-700 hover:border-zinc-500"}`}
+                      className={`h-7 w-7 rounded-full border-2 transition-all ${textColor === c ? "border-rose-500 scale-110" : "border-zinc-700 hover:border-zinc-500"}`}
                       style={{ backgroundColor: c }} />
                   ))}
                 </div>
               </div>
               <div>
                 <label className="mb-1 block text-[10px] uppercase tracking-wider text-zinc-500">Size: {textSize}px</label>
-                <input type="range" min={10} max={36} value={textSize} onChange={(e) => setTextSize(Number(e.target.value))} className="w-full accent-rose-500" />
+                <input type="range" min={10} max={48} value={textSize} onChange={(e) => setTextSize(Number(e.target.value))} className="w-full accent-rose-500" />
               </div>
               <div>
                 <label className="mb-1 block text-[10px] uppercase tracking-wider text-zinc-500">Alignment</label>
                 <div className="flex gap-1">
                   {TEXT_ALIGNMENTS.map((a) => (
                     <button key={a} onClick={() => setTextAlign(a)}
-                      className={`flex-1 rounded-md px-2 py-1 text-xs capitalize transition-all ${textAlign === a ? "bg-rose-500/20 text-rose-400 ring-1 ring-rose-500/40" : "bg-white/[0.04] text-zinc-400 hover:bg-white/[0.08]"}`}>{a}</button>
+                      className={`flex-1 rounded-md px-2 py-1.5 text-xs capitalize transition-all ${textAlign === a ? "bg-rose-500/20 text-rose-400 ring-1 ring-rose-500/40" : "bg-white/[0.04] text-zinc-400 hover:bg-white/[0.08]"}`}>{a}</button>
                   ))}
                 </div>
               </div>
@@ -993,7 +1009,12 @@ export default function ScrapbookEditorPage() {
                   ))}
                 </div>
               </div>
-              <button onClick={addText} className="w-full rounded-lg bg-rose-500/20 px-4 py-2 text-sm font-medium text-rose-400 transition-all hover:bg-rose-500/30">+ Add Text Block</button>
+              {!editingText && (
+                <button onClick={addText} className="w-full rounded-lg bg-rose-500/20 px-4 py-2 text-sm font-medium text-rose-400 transition-all hover:bg-rose-500/30">+ Add Text Block</button>
+              )}
+              {editingText && (
+                <button onClick={finishTextEdit} className="w-full rounded-lg bg-rose-500/20 px-4 py-2 text-sm font-medium text-rose-400 transition-all hover:bg-rose-500/30">✓ Save Changes</button>
+              )}
             </div>
           </SidePanel>
         )}
@@ -1199,7 +1220,7 @@ export default function ScrapbookEditorPage() {
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] text-zinc-600 uppercase tracking-wider">Size:</span>
                 {CANVAS_SIZES.map((s, i) => (
-                  <button key={s.name} onClick={() => setCanvasSizeIdx(i)}
+                  <button key={s.name} onClick={() => updateCanvasSize(i)}
                     className={`rounded-md px-2 py-0.5 text-[10px] font-semibold transition-all ${
                       canvasSizeIdx === i
                         ? "bg-rose-500/20 text-rose-400 ring-1 ring-rose-500/40"
@@ -1366,31 +1387,43 @@ function ScrapbookItemRenderer({
         isEditing ? (
           <div className="flex h-full w-full flex-col" onClick={(e) => e.stopPropagation()}>
             <textarea ref={editInputRef} value={editTextValue} onChange={(e) => onEditTextChange(e.target.value)}
-              onBlur={onFinishEdit} onKeyDown={(e) => { if (e.key === "Escape") onFinishEdit(); }}
-              className="flex-1 resize-none rounded bg-white/90 px-2 py-1 outline-none ring-2 ring-rose-500"
-              style={{ fontFamily: textFont, color: textColor, fontSize: `${textSize}px` }} />
-            <div className="absolute -bottom-10 left-0 flex items-center gap-1 rounded-lg bg-zinc-900/95 px-2 py-1 shadow-xl backdrop-blur-sm" style={{ zIndex: 9999 }}>
-              {FONTS.slice(0, 3).map((f) => (
-                <button key={f.name} onClick={(e) => { e.stopPropagation(); onTextFontChange(f.value); }}
-                  className={`rounded px-1.5 py-0.5 text-[10px] ${textFont === f.value ? "bg-rose-500/30 text-rose-400" : "text-zinc-400 hover:text-white"}`}
-                  style={{ fontFamily: f.value }}>{f.name}</button>
-              ))}
-              <div className="mx-1 h-3 w-px bg-zinc-700" />
-              {TEXT_COLORS.slice(0, 4).map((c) => (
-                <button key={c} onClick={(e) => { e.stopPropagation(); onTextColorChange(c); }}
-                  className={`h-4 w-4 rounded-full border ${textColor === c ? "border-rose-500" : "border-zinc-600"}`}
-                  style={{ backgroundColor: c }} />
-              ))}
-              <div className="mx-1 h-3 w-px bg-zinc-700" />
-              <button onClick={(e) => { e.stopPropagation(); onTextSizeChange(Math.max(10, textSize - 2)); }} className="text-[10px] text-zinc-400 hover:text-white px-1">A-</button>
-              <button onClick={(e) => { e.stopPropagation(); onTextSizeChange(Math.min(36, textSize + 2)); }} className="text-[10px] text-zinc-400 hover:text-white px-1">A+</button>
-              <div className="mx-1 h-3 w-px bg-zinc-700" />
-              {(["left", "center", "right"] as const).map((a) => (
-                <button key={a} onClick={(e) => { e.stopPropagation(); onTextAlignChange(a); }}
-                  className={`px-1 text-[10px] ${textAlign === a ? "text-rose-400" : "text-zinc-400 hover:text-white"}`}>
-                  {a === "left" ? "⫷" : a === "right" ? "⫸" : "⊡"}
-                </button>
-              ))}
+              onKeyDown={(e) => { if (e.key === "Escape") onFinishEdit(); }}
+              placeholder="Type something…"
+              className="flex-1 resize-none rounded-lg bg-white/95 px-3 py-2 outline-none ring-2 ring-rose-500 shadow-lg"
+              style={{ fontFamily: textFont, color: textColor, fontSize: `${textSize}px`, textAlign: textAlign as React.CSSProperties["textAlign"] }} />
+            {/* Formatting toolbar */}
+            <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 flex flex-col gap-1 rounded-xl bg-zinc-900/95 p-2 shadow-2xl backdrop-blur-sm border border-white/[0.08]" style={{ zIndex: 9999 }}
+              onMouseDown={(e) => e.preventDefault()}>
+              {/* Row 1: Fonts + Size */}
+              <div className="flex items-center gap-1">
+                {FONTS.map((f) => (
+                  <button key={f.name} onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onTextFontChange(f.value); }}
+                    className={`rounded-md px-2 py-1 text-xs transition-all ${textFont === f.value ? "bg-rose-500/30 text-rose-400" : "text-zinc-400 hover:text-white hover:bg-white/[0.08]"}`}
+                    style={{ fontFamily: f.value }}>{f.name}</button>
+                ))}
+                <div className="mx-1 h-4 w-px bg-zinc-700" />
+                <button onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onTextSizeChange(Math.max(10, textSize - 2)); }} className="flex h-6 w-6 items-center justify-center rounded text-xs text-zinc-400 hover:text-white hover:bg-white/[0.08]">A↓</button>
+                <span className="text-[10px] text-zinc-500 w-6 text-center">{textSize}</span>
+                <button onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onTextSizeChange(Math.min(48, textSize + 2)); }} className="flex h-6 w-6 items-center justify-center rounded text-xs text-zinc-400 hover:text-white hover:bg-white/[0.08]">A↑</button>
+              </div>
+              {/* Row 2: Colors + Align + Done */}
+              <div className="flex items-center gap-1">
+                {TEXT_COLORS.map((c) => (
+                  <button key={c} onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onTextColorChange(c); }}
+                    className={`h-5 w-5 rounded-full border-2 transition-all ${textColor === c ? "border-rose-500 scale-110" : "border-zinc-600 hover:border-zinc-400"}`}
+                    style={{ backgroundColor: c }} />
+                ))}
+                <div className="mx-1 h-4 w-px bg-zinc-700" />
+                {(["left", "center", "right"] as const).map((a) => (
+                  <button key={a} onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onTextAlignChange(a); }}
+                    className={`rounded-md px-1.5 py-0.5 text-[11px] transition-all ${textAlign === a ? "bg-rose-500/30 text-rose-400" : "text-zinc-400 hover:text-white hover:bg-white/[0.08]"}`}>
+                    {a === "left" ? "◧" : a === "right" ? "◨" : "◫"}
+                  </button>
+                ))}
+                <div className="mx-1 h-4 w-px bg-zinc-700" />
+                <button onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onFinishEdit(); }}
+                  className="rounded-md bg-rose-500/20 px-2.5 py-0.5 text-xs font-medium text-rose-400 hover:bg-rose-500/30 transition-all">Done</button>
+              </div>
             </div>
           </div>
         ) : (

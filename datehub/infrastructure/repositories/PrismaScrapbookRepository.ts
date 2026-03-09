@@ -71,6 +71,7 @@ function mapScrapbook(
     name: string;
     coverUrl: string | null;
     shareToken: string | null;
+    canvasSize?: number;
     createdBy: string;
     createdAt: Date;
     updatedAt: Date;
@@ -83,6 +84,7 @@ function mapScrapbook(
     name: row.name,
     coverUrl: row.coverUrl,
     shareToken: row.shareToken,
+    canvasSize: row.canvasSize ?? 0,
     createdBy: row.createdBy,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -228,6 +230,23 @@ export class PrismaScrapbookRepository implements IScrapbookRepository {
 
   async deleteScrapbook(id: string): Promise<void> {
     await prisma.scrapbook.delete({ where: { id } });
+  }
+
+  async updateScrapbook(
+    id: string,
+    updates: Partial<Pick<ScrapbookData, "canvasSize">>
+  ): Promise<ScrapbookData> {
+    const row = await prisma.scrapbook.update({
+      where: { id },
+      data: updates,
+      include: {
+        pages: {
+          include: { items: { include: { reactions: true }, orderBy: { zIndex: "asc" } } },
+          orderBy: { pageNumber: "asc" },
+        },
+      },
+    });
+    return mapScrapbook(row);
   }
 
   async toggleItemLock(itemId: string, locked: boolean): Promise<ScrapbookItemData> {

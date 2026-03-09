@@ -33,6 +33,7 @@ import { AddReactionUseCase } from "@/application/use-cases/scrapbook/AddReactio
 import { RemoveReactionUseCase } from "@/application/use-cases/scrapbook/RemoveReactionUseCase";
 import { GenerateShareTokenUseCase } from "@/application/use-cases/scrapbook/GenerateShareTokenUseCase";
 import { GetSharedScrapbookUseCase } from "@/application/use-cases/scrapbook/GetSharedScrapbookUseCase";
+import { UpdateScrapbookUseCase } from "@/application/use-cases/scrapbook/UpdateScrapbookUseCase";
 import { PrismaPaintingSessionRepository } from "@/infrastructure/repositories/PrismaPaintingSessionRepository";
 import { OpenAIPaintingAdapter } from "@/infrastructure/adapters/OpenAIPaintingAdapter";
 import { CreatePaintingSessionUseCase } from "@/application/use-cases/painting-session/CreatePaintingSessionUseCase";
@@ -248,6 +249,10 @@ class Container {
 
   get getSharedScrapbookUseCase(): GetSharedScrapbookUseCase {
     return new GetSharedScrapbookUseCase(this.scrapbookRepository);
+  }
+
+  get updateScrapbookUseCase(): UpdateScrapbookUseCase {
+    return new UpdateScrapbookUseCase(this.scrapbookRepository);
   }
 
   get getVehicleBuildUseCase(): GetVehicleBuildUseCase {

@@ -48,4 +48,5 @@ export interface IScrapbookRepository {
   updatePage(pageId: string, updates: Partial<Pick<ScrapbookPageData, "backgroundColor">>): Promise<ScrapbookPageData>;
   deletePage(pageId: string): Promise<void>;
   deleteScrapbook(id: string): Promise<void>;
+  updateScrapbook(id: string, updates: Partial<Pick<ScrapbookData, "canvasSize">>): Promise<ScrapbookData>;
 }
