@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGameRoom, GameRoomDto } from "@/hooks/useGameRoom";
+import { Puzzle, Trophy, Save, RefreshCw, Map, BookOpen, Lightbulb, Flame } from "lucide-react";
 
 // --- Types ---
 
@@ -349,7 +350,7 @@ export default function TriviaPage() {
               Back to Map
             </Link>
             <span className="text-zinc-700">|</span>
-            <span className="text-lg font-bold">🧩 Trivia Tower</span>
+            <span className="text-lg font-bold"><Puzzle className="h-5 w-5 inline" /> Trivia Tower</span>
           </div>
           <UserButton afterSignOutUrl="/" />
         </div>
@@ -360,7 +361,7 @@ export default function TriviaPage() {
         {(phase === "idle" || phase === "lobby") && !gameView && (
           <div className="space-y-8">
             <div className="text-center">
-              <h1 className="text-3xl font-bold">🧩 Trivia Tower</h1>
+              <h1 className="text-3xl font-bold">Trivia Tower</h1>
               <p className="mt-2 text-zinc-500">Test your knowledge with AI-generated questions</p>
             </div>
 
@@ -372,7 +373,7 @@ export default function TriviaPage() {
                   className="flex w-full items-center justify-between p-5 text-left"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-xl">📖</span>
+                    <BookOpen className="h-5 w-5" />
                     <span className="font-semibold">How to Play</span>
                   </div>
                   <span className={`text-zinc-500 transition-transform ${showHowToPlay ? "rotate-180" : ""}`}>▼</span>
@@ -611,7 +612,7 @@ export default function TriviaPage() {
               <div className="flex items-center gap-3">
                 {myStreak >= 3 && (
                   <span className="animate-pulse text-sm font-bold text-orange-400">
-                    🔥 {myStreak} streak!
+                    <Flame className="h-4 w-4 inline" /> {myStreak} streak!
                   </span>
                 )}
                 {(meta.mode as string) === "survival" && (
@@ -705,7 +706,7 @@ export default function TriviaPage() {
             <Card className="border-amber-500/20 bg-amber-500/5">
               <CardContent className="p-5">
                 <div className="flex items-start gap-3">
-                  <span className="text-xl">💡</span>
+                  <Lightbulb className="h-5 w-5" />
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-amber-400">Fun Fact</p>
                     <p className="mt-1 text-sm text-zinc-300">{roundResult.funFact}</p>
@@ -721,7 +722,7 @@ export default function TriviaPage() {
                   <div className="text-center">
                     <p className="text-xs text-zinc-500">You</p>
                     <p className="text-2xl font-bold text-orange-400">{myScore}</p>
-                    {myStreak >= 3 && <p className="mt-1 text-xs text-orange-400">🔥 {myStreak} streak</p>}
+                    {myStreak >= 3 && <p className="mt-1 text-xs text-orange-400"><Flame className="h-4 w-4 inline" /> {myStreak} streak</p>}
                   </div>
                   {room?.player2Id && (
                     <>
@@ -755,7 +756,7 @@ export default function TriviaPage() {
         {gameView === "game-over" && room && (
           <div className="space-y-8">
             <div className="text-center">
-              <div className="text-6xl">🏆</div>
+              <div className="text-6xl"><Trophy className="h-14 w-14" /></div>
               <h1 className="mt-4 text-3xl font-bold">Game Complete!</h1>
               {room.player2Id && (
                 <p className="mt-2 text-lg">
@@ -794,7 +795,7 @@ export default function TriviaPage() {
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-amber-400">🔥 {myBestStreak}</p>
+                    <p className="text-2xl font-bold text-amber-400"><Flame className="h-5 w-5 inline" /> {myBestStreak}</p>
                     <p className="text-[11px] text-zinc-500">Best Streak</p>
                   </div>
                   <div className="text-center">
@@ -812,18 +813,18 @@ export default function TriviaPage() {
                 <div className="flex items-center justify-center gap-4">
                   {!resultSaved && (
                     <Button onClick={handleSaveResult} className="bg-yellow-600 hover:bg-yellow-700">
-                      💾 Save to Leaderboard
+                      <Save className="h-4 w-4" /> Save to Leaderboard
                     </Button>
                   )}
                   {resultSaved && (
                     <span className="text-sm text-emerald-400">✅ Saved!</span>
                   )}
                   <Button onClick={handlePlayAgain} className="bg-orange-600 hover:bg-orange-700">
-                    🔄 Play Again
+                    <RefreshCw className="h-4 w-4" /> Play Again
                   </Button>
                   <Link href="/map">
                     <Button variant="outline" className="border-white/[0.1]">
-                      🗺️ Back to Map
+                      <Map className="h-4 w-4" /> Back to Map
                     </Button>
                   </Link>
                 </div>

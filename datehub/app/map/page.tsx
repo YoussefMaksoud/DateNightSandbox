@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Map, User } from "lucide-react";
 import { Canvas } from "@react-three/fiber";
 import { KeyboardControls } from "@react-three/drei";
 import MapScene3DInner, { toWorld, to2D, KEYBOARD_MAP } from "@/components/map3d/MapScene3D";
@@ -196,8 +197,8 @@ export default function MapPage() {
                 Date<span className="text-rose-400">Hub</span>
               </span>
             </Link>
-            <span className="ml-1 rounded-full bg-emerald-500/10 px-3 py-0.5 text-[11px] font-semibold text-emerald-400">
-              🗺️ World Map
+            <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-3 py-0.5 text-[11px] font-semibold text-emerald-400">
+              <Map className="h-3.5 w-3.5 inline" /> World Map
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -213,7 +214,7 @@ export default function MapPage() {
               href="/avatar"
               className="flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-xs font-medium text-zinc-400 transition-colors hover:bg-white/[0.06]"
             >
-              😊 Avatar
+              <User className="h-3.5 w-3.5" /> Avatar
             </Link>
             <UserButton afterSignOutUrl="/" />
           </div>

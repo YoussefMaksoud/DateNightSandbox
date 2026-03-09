@@ -26,3 +26,27 @@ export async function POST(
     return { page };
   }, 201);
 }
+
+const updatePageSchema = z.object({
+  pageId: z.string(),
+  backgroundColor: z.string().optional(),
+});
+
+export async function PUT(request: NextRequest) {
+  return handleApiRequest(async () => {
+    await requireAuth();
+    const body = await request.json();
+    const { pageId, ...updates } = updatePageSchema.parse(body);
+    const page = await container.updatePageUseCase.execute(pageId, updates);
+    return { page };
+  });
+}
+
+export async function DELETE(request: NextRequest) {
+  return handleApiRequest(async () => {
+    await requireAuth();
+    const { pageId } = await request.json();
+    await container.deletePageUseCase.execute(pageId);
+    return { success: true };
+  });
+}

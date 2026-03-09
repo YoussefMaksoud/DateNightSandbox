@@ -107,14 +107,15 @@ model MapPosition {
 }
 
 model Scrapbook {
-  id        String          @id @default(uuid())
-  roomId    String          @default("default-room")
-  name      String
-  coverUrl  String?
-  createdBy String
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
-  pages     ScrapbookPage[]
+  id         String          @id @default(uuid())
+  roomId     String          @default("default-room")
+  name       String
+  coverUrl   String?
+  shareToken String?         @unique
+  createdBy  String
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  pages      ScrapbookPage[]
 
   @@index([roomId])
 }
@@ -133,23 +134,37 @@ model ScrapbookPage {
 }
 
 model ScrapbookItem {
-  id        String        @id @default(uuid())
+  id        String              @id @default(uuid())
   pageId    String
   type      String
   content   String
-  x         Float         @default(50)
-  y         Float         @default(50)
-  width     Float         @default(100)
-  height    Float         @default(100)
-  rotation  Float         @default(0)
-  scale     Float         @default(1)
-  zIndex    Int           @default(0)
+  x         Float               @default(50)
+  y         Float               @default(50)
+  width     Float               @default(100)
+  height    Float               @default(100)
+  rotation  Float               @default(0)
+  scale     Float               @default(1)
+  zIndex    Int                 @default(0)
+  locked    Boolean             @default(false)
   createdBy String
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  page      ScrapbookPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  page      ScrapbookPage       @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  reactions ScrapbookReaction[]
 
   @@index([pageId])
+}
+
+model ScrapbookReaction {
+  id        String        @id @default(uuid())
+  itemId    String
+  userId    String
+  emoji     String        @default("❤️")
+  createdAt DateTime      @default(now())
+  item      ScrapbookItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, userId])
+  @@index([itemId])
 }
 
 model VehicleBuild {

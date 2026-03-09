@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { Palette, ClipboardList, Paintbrush, Pin, CheckCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGameRoom, GameRoomDto } from "@/hooks/useGameRoom";
@@ -200,7 +201,7 @@ export default function PaintingPage() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 shadow-lg shadow-purple-500/25">
-              <span className="text-lg">🎨</span>
+              <Palette className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold tracking-tight text-white">
               Paint<span className="text-purple-400">Studio</span>
@@ -234,7 +235,7 @@ export default function PaintingPage() {
                 : "text-zinc-500 hover:text-zinc-300"
             }`}
           >
-            🎨 New Session
+            <Paintbrush className="h-4 w-4" /> New Session
           </button>
           <button
             onClick={() => { setView("history"); fetchSessions(); }}
@@ -244,7 +245,7 @@ export default function PaintingPage() {
                 : "text-zinc-500 hover:text-zinc-300"
             }`}
           >
-            📋 Past Sessions ({sessions.length})
+            <ClipboardList className="h-4 w-4" /> Past Sessions ({sessions.length})
           </button>
         </div>
 
@@ -253,7 +254,7 @@ export default function PaintingPage() {
           <div className="space-y-8">
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-white">
-                Paint Night 🎨
+                Paint Night
               </h1>
               <p className="mt-1 text-zinc-500">
                 Choose your difficulty and theme, then start painting together!
@@ -264,7 +265,7 @@ export default function PaintingPage() {
             <Card>
               <CardContent>
                 <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-400">
-                  🎯 Difficulty
+                  Difficulty
                 </h3>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                   {DIFFICULTIES.map((d) => (
@@ -291,7 +292,7 @@ export default function PaintingPage() {
             <Card>
               <CardContent>
                 <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-400">
-                  🖼️ Theme
+                  Theme
                 </h3>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
                   {THEMES.map((t) => (
@@ -332,7 +333,7 @@ export default function PaintingPage() {
                           Preparing canvas…
                         </div>
                       ) : (
-                        "🎨 Paint Solo"
+                        <><Paintbrush className="h-4 w-4" /> Paint Solo</>
                       )}
                     </Button>
                     <Button
@@ -348,7 +349,7 @@ export default function PaintingPage() {
                           Creating room…
                         </div>
                       ) : (
-                        "👥 Create Room"
+                        "Create Room"
                       )}
                     </Button>
                   </div>
@@ -394,7 +395,7 @@ export default function PaintingPage() {
         {view === "lobby" && room && (
           <div className="space-y-8">
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-white">🎨 Paint Lobby</h1>
+              <h1 className="text-3xl font-bold text-white">Paint Lobby</h1>
               <p className="mt-2 text-zinc-500">Waiting for your partner to join</p>
             </div>
 
@@ -521,7 +522,7 @@ export default function PaintingPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-white">
-                  Your Reference Painting 🖼️
+                  Your Reference Painting
                 </h1>
                 <p className="mt-1 text-zinc-500">
                   {THEMES.find((t) => t.id === session.theme)?.emoji}{" "}
@@ -544,7 +545,7 @@ export default function PaintingPage() {
                 )}
                 {session.status === "completed" && (
                   <span className="rounded-full bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-400">
-                    ✅ Completed
+                    <CheckCircle className="h-3.5 w-3.5 inline" /> Completed
                   </span>
                 )}
               </div>
@@ -577,7 +578,7 @@ export default function PaintingPage() {
                   <Card>
                     <CardContent>
                       <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-400">
-                        🎨 Color Palette
+                        Color Palette
                       </h3>
                       <p className="mb-3 text-[11px] text-zinc-600">
                         These are the main colors used — try to match them!
@@ -602,7 +603,7 @@ export default function PaintingPage() {
                   <Card>
                     <CardContent>
                       <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-400">
-                        📝 Session Info
+                        Session Info
                       </h3>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
@@ -645,7 +646,7 @@ export default function PaintingPage() {
                               Saving…
                             </div>
                           ) : (
-                            "📌 Save for Later"
+                            <><Pin className="h-4 w-4" /> Save for Later</>
                           )}
                         </Button>
                         <Button
@@ -655,7 +656,7 @@ export default function PaintingPage() {
                           disabled={savingStatus === "saving"}
                           onClick={() => handleUpdateStatus("completed")}
                         >
-                          ✅ Mark Complete
+                          <><CheckCircle className="h-4 w-4" /> Mark Complete</>
                         </Button>
                         <Button
                           variant="secondary"
@@ -663,7 +664,7 @@ export default function PaintingPage() {
                           className="w-full"
                           onClick={() => { setSession(null); resetRoom(); setView("setup"); }}
                         >
-                          ← New Session
+                          <><ArrowLeft className="h-4 w-4" /> New Session</>
                         </Button>
                       </CardContent>
                     </Card>
@@ -678,7 +679,7 @@ export default function PaintingPage() {
                           className="w-full"
                           onClick={() => { setSession(null); resetRoom(); setView("setup"); }}
                         >
-                          ← Start New Session
+                          <><ArrowLeft className="h-4 w-4" /> Start New Session</>
                         </Button>
                       </CardContent>
                     </Card>
@@ -700,7 +701,7 @@ export default function PaintingPage() {
           <div className="space-y-6">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-white">
-                Past Paint Sessions 📋
+                Past Paint Sessions
               </h1>
               <p className="mt-1 text-zinc-500">
                 View your previous painting date nights
@@ -717,7 +718,7 @@ export default function PaintingPage() {
             ) : sessions.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center py-12">
-                  <span className="mb-3 text-4xl">🎨</span>
+                  <Palette className="mb-3 h-10 w-10 text-zinc-500" />
                   <p className="text-sm text-zinc-400">No painting sessions yet!</p>
                   <Button
                     variant="primary"

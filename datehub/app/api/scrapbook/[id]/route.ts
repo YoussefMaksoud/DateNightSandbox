@@ -18,3 +18,15 @@ export async function GET(
     return { scrapbook };
   });
 }
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return handleApiRequest(async () => {
+    await requireAuth();
+    const { id } = await params;
+    await container.deleteScrapbookUseCase.execute(id);
+    return { success: true };
+  });
+}

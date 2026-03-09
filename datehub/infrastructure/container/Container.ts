@@ -25,6 +25,14 @@ import { AddPageUseCase } from "@/application/use-cases/scrapbook/AddPageUseCase
 import { AddItemUseCase } from "@/application/use-cases/scrapbook/AddItemUseCase";
 import { UpdateItemUseCase } from "@/application/use-cases/scrapbook/UpdateItemUseCase";
 import { DeleteItemUseCase } from "@/application/use-cases/scrapbook/DeleteItemUseCase";
+import { UpdatePageUseCase } from "@/application/use-cases/scrapbook/UpdatePageUseCase";
+import { DeletePageUseCase } from "@/application/use-cases/scrapbook/DeletePageUseCase";
+import { DeleteScrapbookUseCase } from "@/application/use-cases/scrapbook/DeleteScrapbookUseCase";
+import { ToggleItemLockUseCase } from "@/application/use-cases/scrapbook/ToggleItemLockUseCase";
+import { AddReactionUseCase } from "@/application/use-cases/scrapbook/AddReactionUseCase";
+import { RemoveReactionUseCase } from "@/application/use-cases/scrapbook/RemoveReactionUseCase";
+import { GenerateShareTokenUseCase } from "@/application/use-cases/scrapbook/GenerateShareTokenUseCase";
+import { GetSharedScrapbookUseCase } from "@/application/use-cases/scrapbook/GetSharedScrapbookUseCase";
 import { PrismaPaintingSessionRepository } from "@/infrastructure/repositories/PrismaPaintingSessionRepository";
 import { OpenAIPaintingAdapter } from "@/infrastructure/adapters/OpenAIPaintingAdapter";
 import { CreatePaintingSessionUseCase } from "@/application/use-cases/painting-session/CreatePaintingSessionUseCase";
@@ -208,6 +216,38 @@ class Container {
 
   get deleteItemUseCase(): DeleteItemUseCase {
     return new DeleteItemUseCase(this.scrapbookRepository);
+  }
+
+  get updatePageUseCase(): UpdatePageUseCase {
+    return new UpdatePageUseCase(this.scrapbookRepository);
+  }
+
+  get deletePageUseCase(): DeletePageUseCase {
+    return new DeletePageUseCase(this.scrapbookRepository);
+  }
+
+  get deleteScrapbookUseCase(): DeleteScrapbookUseCase {
+    return new DeleteScrapbookUseCase(this.scrapbookRepository);
+  }
+
+  get toggleItemLockUseCase(): ToggleItemLockUseCase {
+    return new ToggleItemLockUseCase(this.scrapbookRepository);
+  }
+
+  get addReactionUseCase(): AddReactionUseCase {
+    return new AddReactionUseCase(this.scrapbookRepository);
+  }
+
+  get removeReactionUseCase(): RemoveReactionUseCase {
+    return new RemoveReactionUseCase(this.scrapbookRepository);
+  }
+
+  get generateShareTokenUseCase(): GenerateShareTokenUseCase {
+    return new GenerateShareTokenUseCase(this.scrapbookRepository);
+  }
+
+  get getSharedScrapbookUseCase(): GetSharedScrapbookUseCase {
+    return new GetSharedScrapbookUseCase(this.scrapbookRepository);
   }
 
   get getVehicleBuildUseCase(): GetVehicleBuildUseCase {

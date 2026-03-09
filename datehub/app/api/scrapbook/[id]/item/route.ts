@@ -6,7 +6,7 @@ import { requireAuth } from "@/lib/auth-middleware";
 
 const addItemSchema = z.object({
   pageId: z.string(),
-  type: z.enum(["photo", "sticker", "text"]),
+  type: z.enum(["photo", "sticker", "text", "drawing"]),
   content: z.string(),
   x: z.number(),
   y: z.number(),
@@ -27,6 +27,7 @@ const updateItemSchema = z.object({
   scale: z.number().optional(),
   zIndex: z.number().optional(),
   content: z.string().optional(),
+  locked: z.boolean().optional(),
 });
 
 export async function POST(request: NextRequest) {

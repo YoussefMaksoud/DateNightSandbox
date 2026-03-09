@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import SpotifyPlayer, { type PlaybackUpdate } from "@/components/SpotifyPlayer";
 import Link from "next/link";
+import { Music, Headphones } from "lucide-react";
 
 // --- Types ---
 
@@ -316,7 +317,7 @@ export default function MusicLoungePage() {
               Back to Map
             </Link>
             <span className="text-zinc-700">|</span>
-            <span className="text-lg font-bold">🎵 Music Lounge</span>
+            <span className="text-lg font-bold"><Music className="h-5 w-5 inline" /> Music Lounge</span>
           </div>
           <UserButton afterSignOutUrl="/" />
         </div>
@@ -324,7 +325,7 @@ export default function MusicLoungePage() {
 
       <main className="relative z-10 mx-auto max-w-5xl px-6 py-8">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold">🎵 Music Lounge</h1>
+          <h1 className="text-3xl font-bold">Music Lounge</h1>
           <p className="mt-2 text-zinc-500">Listen to music together</p>
         </div>
 
@@ -333,7 +334,7 @@ export default function MusicLoungePage() {
           <Card className="border-white/[0.06] bg-white/[0.02]">
             <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1DB954]/10">
-                <span className="text-4xl">🎧</span>
+                <Headphones className="h-10 w-10 text-[#1DB954]" />
               </div>
               <div>
                 <p className="text-lg font-semibold">Connect Spotify</p>
@@ -401,7 +402,7 @@ export default function MusicLoungePage() {
               {/* Playlist */}
               <div className="flex-1 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl">
                 <div className="flex items-center justify-between border-b border-white/[0.04] px-4 py-3">
-                  <h2 className="text-sm font-semibold text-zinc-300">🎶 Shared Playlist</h2>
+                  <h2 className="text-sm font-semibold text-zinc-300"><Music className="h-4 w-4 inline" /> Shared Playlist</h2>
                   <span className="text-xs text-zinc-600">{playlist.length} tracks</span>
                 </div>
 
@@ -419,7 +420,7 @@ export default function MusicLoungePage() {
                   </div>
                 ) : playlist.length === 0 ? (
                   <div className="flex flex-col items-center py-16 text-center">
-                    <div className="mb-3 text-3xl opacity-40">🎶</div>
+                    <div className="mb-3 opacity-40"><Music className="h-8 w-8" /></div>
                     <p className="text-sm text-zinc-600">Search above to add your first song</p>
                   </div>
                 ) : (
@@ -543,7 +544,7 @@ export default function MusicLoungePage() {
               ) : (
                 <Card className="border-white/[0.06] bg-white/[0.02]">
                   <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
-                    <div className="text-4xl opacity-40">🎧</div>
+                    <div className="opacity-40"><Headphones className="h-10 w-10" /></div>
                     <p className="text-sm text-zinc-500">Select a song to start listening</p>
                     <p className="text-xs text-zinc-600">Both of you will hear the same thing</p>
                   </CardContent>

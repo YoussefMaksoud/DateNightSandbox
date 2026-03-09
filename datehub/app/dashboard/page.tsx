@@ -7,6 +7,24 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import SpotifyPlayer, { type PlaybackUpdate } from "@/components/SpotifyPlayer";
 import Link from "next/link";
+import {
+  Map,
+  Puzzle,
+  Flag,
+  Palette,
+  Music,
+  BookOpen,
+  GraduationCap,
+  Wrench,
+  User,
+  Trophy,
+  Film,
+  Gamepad2,
+  ChefHat,
+  MessageCircle,
+  Sparkles,
+  Moon,
+} from "lucide-react";
 
 // --- Types ---
 
@@ -148,15 +166,15 @@ async function startActivity(activityId: string): Promise<string | null> {
 // --- Activity type icons ---
 
 function ActivityIcon({ type }: { type: string }) {
-  const icons: Record<string, string> = {
-    music: "🎵",
-    movie: "🎬",
-    game: "🎮",
-    cook: "🍳",
-    quiz: "🧩",
-    chat: "💬",
+  const icons: Record<string, React.ReactNode> = {
+    music: <Music className="h-5 w-5" />,
+    movie: <Film className="h-5 w-5" />,
+    game: <Gamepad2 className="h-5 w-5" />,
+    cook: <ChefHat className="h-5 w-5" />,
+    quiz: <Puzzle className="h-5 w-5" />,
+    chat: <MessageCircle className="h-5 w-5" />,
   };
-  return <span className="text-lg">{icons[type] || "✨"}</span>;
+  return <span className="text-lg">{icons[type] || <Sparkles className="h-5 w-5" />}</span>;
 }
 
 // --- Component ---
@@ -404,14 +422,14 @@ export default function DashboardPage() {
               href="/map"
               className="hidden items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-1.5 transition-colors hover:bg-emerald-500/[0.12] sm:flex"
             >
-              <span className="text-sm">🗺️</span>
+              <Map className="h-4 w-4 text-emerald-400" />
               <span className="text-xs font-medium text-emerald-400">World Map</span>
             </Link>
             <Link
               href="/avatar"
               className="hidden items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-1.5 transition-colors hover:bg-white/[0.06] sm:flex"
             >
-              <span className="text-sm">😊</span>
+              <User className="h-4 w-4 text-zinc-400" />
               <span className="text-xs font-medium text-zinc-400">My Avatar</span>
             </Link>
             <div className="hidden items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-1.5 sm:flex">
@@ -429,7 +447,7 @@ export default function DashboardPage() {
         {/* Page title */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-white">
-            Good evening, {user?.firstName || "there"} 💜
+            Good evening, {user?.firstName || "there"}
           </h1>
           <p className="mt-1 text-zinc-500">
             Pick an activity or queue up some tunes together.
@@ -440,22 +458,22 @@ export default function DashboardPage() {
         <section className="mb-8">
           <div className="mb-5 flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10">
-              <span className="text-sm">✨</span>
+              <Sparkles className="h-4 w-4 text-rose-400" />
             </div>
             <h2 className="text-lg font-semibold text-white">Activities</h2>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {[
-              { href: "/map", emoji: "🗺️", label: "World Map", color: "#22C55E", desc: "Explore together" },
-              { href: "/trivia", emoji: "🧩", label: "Trivia Tower", color: "#F97316", desc: "AI-powered trivia" },
-              { href: "/race", emoji: "🏁", label: "Race Track", color: "#22C55E", desc: "Race each other" },
-              { href: "/painting", emoji: "🎨", label: "Paint Studio", color: "#9C27B0", desc: "Paint together" },
-              { href: "/music", emoji: "🎵", label: "Music Lounge", color: "#e11d48", desc: "Listen together" },
-              { href: "/scrapbook", emoji: "📔", label: "Scrapbook", color: "#e91e63", desc: "Create memories" },
-              { href: "/homework", emoji: "🎓", label: "Homework Night", color: "#1565c0", desc: "Study together" },
-              { href: "/vehicle-build", emoji: "🔧", label: "Speed Shop", color: "#E67E22", desc: "Customize ride" },
-              { href: "/avatar", emoji: "😊", label: "Avatar", color: "#8B5CF6", desc: "Customize look" },
-              { href: "/race/leaderboard", emoji: "🏆", label: "Leaderboard", color: "#DAA520", desc: "Race records" },
+              { href: "/map", icon: <Map className="h-6 w-6" />, label: "World Map", color: "#22C55E", desc: "Explore together" },
+              { href: "/trivia", icon: <Puzzle className="h-6 w-6" />, label: "Trivia Tower", color: "#F97316", desc: "AI-powered trivia" },
+              { href: "/race", icon: <Flag className="h-6 w-6" />, label: "Race Track", color: "#22C55E", desc: "Race each other" },
+              { href: "/painting", icon: <Palette className="h-6 w-6" />, label: "Paint Studio", color: "#9C27B0", desc: "Paint together" },
+              { href: "/music", icon: <Music className="h-6 w-6" />, label: "Music Lounge", color: "#e11d48", desc: "Listen together" },
+              { href: "/scrapbook", icon: <BookOpen className="h-6 w-6" />, label: "Scrapbook", color: "#e91e63", desc: "Create memories" },
+              { href: "/homework", icon: <GraduationCap className="h-6 w-6" />, label: "Homework Night", color: "#1565c0", desc: "Study together" },
+              { href: "/vehicle-build", icon: <Wrench className="h-6 w-6" />, label: "Speed Shop", color: "#E67E22", desc: "Customize ride" },
+              { href: "/avatar", icon: <User className="h-6 w-6" />, label: "Avatar", color: "#8B5CF6", desc: "Customize look" },
+              { href: "/race/leaderboard", icon: <Trophy className="h-6 w-6" />, label: "Leaderboard", color: "#DAA520", desc: "Race records" },
             ].map((item) => (
               <Link key={item.href} href={item.href}>
                 <div
@@ -464,9 +482,9 @@ export default function DashboardPage() {
                 >
                   <div
                     className="flex h-12 w-12 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
-                    style={{ backgroundColor: item.color + "18" }}
+                    style={{ backgroundColor: item.color + "18", color: item.color }}
                   >
-                    <span className="text-2xl">{item.emoji}</span>
+                    {item.icon}
                   </div>
                   <span className="text-sm font-semibold text-white">{item.label}</span>
                   <span className="text-[10px] text-zinc-500">{item.desc}</span>
@@ -483,7 +501,7 @@ export default function DashboardPage() {
             <section>
               <div className="mb-5 flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10">
-                  <span className="text-sm">🌙</span>
+                  <Moon className="h-4 w-4 text-rose-400" />
                 </div>
                 <h2 className="text-lg font-semibold text-white">Date Night Activities</h2>
               </div>
@@ -498,7 +516,7 @@ export default function DashboardPage() {
                 <Card>
                   <CardContent className="flex flex-col items-center py-12 text-center">
                     <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500/10 to-purple-500/10">
-                      <span className="text-3xl">🌙</span>
+                      <Moon className="h-8 w-8 text-rose-400" />
                     </div>
                     <p className="text-sm text-zinc-500">
                       No activities available yet. New date night ideas coming soon!
@@ -683,7 +701,7 @@ export default function DashboardPage() {
                 </div>
               ) : playlist.length === 0 ? (
                 <div className="flex flex-col items-center py-16 text-center">
-                  <div className="mb-3 text-3xl opacity-40">🎶</div>
+                  <div className="mb-3 opacity-40"><Music className="h-8 w-8 text-zinc-400" /></div>
                   <p className="text-sm text-zinc-600">
                     {spotifyConnected
                       ? "Search above to add your first song"

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Dice5 } from "lucide-react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import AvatarRenderer from "@/components/AvatarRenderer";
@@ -206,7 +207,7 @@ export default function AvatarPage() {
         {/* Page title */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-white">
-            Create Your Creature ✨
+            Create Your Creature
           </h1>
           <p className="mt-1 text-zinc-500">
             Pick your creature and make it yours — your partner will see this!
@@ -265,7 +266,7 @@ export default function AvatarPage() {
                     <h2 className="mb-1 text-lg font-semibold text-white">
                       {user?.firstName || "You"}
                     </h2>
-                    <p className="mb-6 text-sm text-zinc-500">Looking great! 💕</p>
+                    <p className="mb-6 text-sm text-zinc-500">Looking great!</p>
 
                     {/* Save status */}
                     <div className="mb-4 flex h-5 items-center justify-center">
@@ -289,7 +290,7 @@ export default function AvatarPage() {
                         className="w-full"
                         onClick={handleRandomize}
                       >
-                        🎲 Randomize
+                        <Dice5 className="h-4 w-4" /> Randomize
                       </Button>
                       <Button
                         variant="primary"

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGameRoom, GameRoomDto } from "@/hooks/useGameRoom";
+import { Flag, Trophy, Save, RefreshCw, Map } from "lucide-react";
 
 // --- Types ---
 
@@ -581,7 +582,7 @@ export default function RacePage() {
               Back to Map
             </Link>
             <span className="text-zinc-700">|</span>
-            <span className="text-lg font-bold">🏁 Race Track</span>
+            <span className="text-lg font-bold"><Flag className="h-5 w-5 inline" /> Race Track</span>
           </div>
           <UserButton afterSignOutUrl="/" />
         </div>
@@ -592,7 +593,7 @@ export default function RacePage() {
         {(phase === "idle" || phase === "lobby") && !view && (
           <div className="space-y-8">
             <div className="text-center">
-              <h1 className="text-3xl font-bold">🏁 Race Lobby</h1>
+              <h1 className="text-3xl font-bold">Race Lobby</h1>
               <p className="mt-2 text-zinc-500">Create or join a race room</p>
             </div>
 
@@ -780,7 +781,7 @@ export default function RacePage() {
         {view === "results" && (
           <div className="space-y-8">
             <div className="text-center">
-              <div className="text-6xl">🏆</div>
+              <div className="text-6xl"><Trophy className="h-14 w-14" /></div>
               <h1 className="mt-4 text-3xl font-bold">Race Complete!</h1>
             </div>
 
@@ -817,18 +818,18 @@ export default function RacePage() {
                 <div className="flex items-center justify-center gap-4">
                   {!resultSaved && myFinishTime && (
                     <Button onClick={handleSaveResult} className="bg-yellow-600 hover:bg-yellow-700">
-                      💾 Save to Leaderboard
+                      <Save className="h-4 w-4" /> Save to Leaderboard
                     </Button>
                   )}
                   {resultSaved && (
                     <span className="text-sm text-emerald-400">✅ Saved!</span>
                   )}
                   <Button onClick={handleRaceAgain} className="bg-emerald-600 hover:bg-emerald-700">
-                    🔄 Race Again
+                    <RefreshCw className="h-4 w-4" /> Race Again
                   </Button>
                   <Link href="/map">
                     <Button variant="outline" className="border-white/[0.1]">
-                      🗺️ Back to Map
+                      <Map className="h-4 w-4" /> Back to Map
                     </Button>
                   </Link>
                 </div>

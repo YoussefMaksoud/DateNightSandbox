@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Wrench, Zap, Weight, Rocket, Cog, Circle, Car, Wind, Flame } from "lucide-react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import Avatar3D from "@/components/map3d/Avatar3D";
@@ -22,12 +23,12 @@ const CATEGORY_LABELS: Record<VehiclePartCategory, string> = {
   nitro: "Nitro System",
 };
 
-const CATEGORY_EMOJI: Record<VehiclePartCategory, string> = {
-  engine: "⚙️",
-  tires: "🛞",
-  body: "🚗",
-  spoiler: "🏎️",
-  nitro: "🔥",
+const CATEGORY_ICON: Record<VehiclePartCategory, React.ReactNode> = {
+  engine: <Cog className="h-4 w-4 inline" />,
+  tires: <Circle className="h-4 w-4 inline" />,
+  body: <Car className="h-4 w-4 inline" />,
+  spoiler: <Wind className="h-4 w-4 inline" />,
+  nitro: <Flame className="h-4 w-4 inline" />,
 };
 
 const DEFAULT_BUILD: VehicleBuildConfigProps = {
@@ -59,7 +60,7 @@ function computeStats(config: VehicleBuildConfigProps): { speed: number; weight:
   };
 }
 
-function StatBar({ label, value, color, icon }: { label: string; value: number; color: string; icon: string }) {
+function StatBar({ label, value, color, icon }: { label: string; value: number; color: string; icon: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
@@ -198,7 +199,7 @@ export default function VehicleBuildPage() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 shadow-lg shadow-orange-500/25">
-              <span className="text-lg">🔧</span>
+              <Wrench className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold tracking-tight text-white">
               Speed<span className="text-orange-400">Shop</span>
@@ -225,7 +226,7 @@ export default function VehicleBuildPage() {
         {/* Page title */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-white">
-            Customize Your Ride 🏎️
+            Customize Your Ride
           </h1>
           <p className="mt-1 text-zinc-500">
             Swap parts to tune your stats — upgrades apply during races!
@@ -284,13 +285,13 @@ export default function VehicleBuildPage() {
                       Race Stats
                     </h3>
                     <div className="space-y-4">
-                      <StatBar label="Speed" value={stats.speed} color="#3B82F6" icon="⚡" />
-                      <StatBar label="Weight" value={stats.weight} color="#F97316" icon="⚖️" />
-                      <StatBar label="Acceleration" value={stats.acceleration} color="#22C55E" icon="🚀" />
+                      <StatBar label="Speed" value={stats.speed} color="#3B82F6" icon={<Zap className="h-3.5 w-3.5 inline" />} />
+                      <StatBar label="Weight" value={stats.weight} color="#F97316" icon={<Weight className="h-3.5 w-3.5 inline" />} />
+                      <StatBar label="Acceleration" value={stats.acceleration} color="#22C55E" icon={<Rocket className="h-3.5 w-3.5 inline" />} />
                     </div>
                     <div className="mt-4 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
                       <p className="text-[11px] text-zinc-500">
-                        💡 Stats only apply during races. Your overworld speed stays the same.
+                        Stats only apply during races. Your overworld speed stays the same.
                       </p>
                     </div>
                   </CardContent>
@@ -333,7 +334,7 @@ export default function VehicleBuildPage() {
                   <Card key={category}>
                     <CardContent>
                       <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-400">
-                        {CATEGORY_EMOJI[category]} {CATEGORY_LABELS[category]}
+                        {CATEGORY_ICON[category]} {CATEGORY_LABELS[category]}
                       </h3>
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         {options.map((option) => {

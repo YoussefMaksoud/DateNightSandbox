@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useUser, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
+import { Trophy, Flag } from "lucide-react";
 
 interface RaceResultDto {
   id: string;
@@ -56,7 +57,7 @@ export default function LeaderboardPage() {
               Back to Map
             </Link>
             <span className="text-zinc-700">|</span>
-            <span className="text-lg font-bold">🏆 Leaderboard</span>
+            <span className="text-lg font-bold"><Trophy className="h-5 w-5 inline" /> Leaderboard</span>
           </div>
           <UserButton afterSignOutUrl="/" />
         </div>
@@ -64,7 +65,7 @@ export default function LeaderboardPage() {
 
       <main className="relative z-10 mx-auto max-w-3xl px-6 py-8">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold">🏆 Race Leaderboard</h1>
+          <h1 className="text-3xl font-bold">Race Leaderboard</h1>
           <p className="mt-2 text-zinc-500">Fastest race times</p>
         </div>
 
@@ -75,7 +76,7 @@ export default function LeaderboardPage() {
         ) : results.length === 0 ? (
           <Card className="border-white/[0.06] bg-white/[0.02]">
             <CardContent className="p-8 text-center">
-              <p className="text-4xl">🏁</p>
+              <div className="text-4xl"><Flag className="h-10 w-10" /></div>
               <p className="mt-3 text-zinc-400">No race results yet. Be the first to race!</p>
               <Link href="/race" className="mt-4 inline-block text-sm text-emerald-400 hover:underline">
                 Start a race →

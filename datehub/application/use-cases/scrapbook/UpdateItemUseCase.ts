@@ -17,6 +17,7 @@ export class UpdateItemUseCase {
         | "scale"
         | "zIndex"
         | "content"
+        | "locked"
       >
     >
   ): Promise<ScrapbookItemData> {

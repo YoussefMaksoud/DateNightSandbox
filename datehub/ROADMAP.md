@@ -61,7 +61,45 @@
 - [x] Spotify playlist panel with search, now playing, progress bar
 - [x] Navigation links to World Map and Avatar
 
+### Scrapbook Station
+- [x] Create/list scrapbooks with multi-page support
+- [x] Three item types: photos (upload), stickers (emoji grid), text
+- [x] Drag-to-reposition items with optimistic local + API persist
+- [x] Collaborative polling sync (2s interval)
+- [x] Page background color picker (12 colors) — persisted to API
+- [x] Delete page support
+- [x] Inline text editing (double-click to edit) with font, color, size controls
+- [x] Item resize handles (corner drag)
+- [x] Item rotation handle
+- [x] Selection system (click to select, click canvas to deselect)
+- [x] Photo frames (None, Polaroid, Shadow, Tape)
+- [x] Tape & Clips decorative sticker panel
+- [x] Bring-to-front z-index control
+- [x] Cover preview on scrapbook list (auto from first photo)
+- [x] Backward-compatible content parsing (old plain-string + new JSON format)
+
 ## 📋 Planned
+
+### Scrapbook — High-Impact Features
+- [x] Photobooth mode — Webcam capture with 6 filters (None, Film Grain, Warm, Cool, B&W, Vintage) + 4 overlays (Hearts, Date Stamp, Film Strip, Sparkles), 3s countdown, saves to scrapbook uploads
+- [x] Handwriting tool — Freehand SVG pen drawing on pages with 7 ink colors and 4 brush sizes, save as drawing item
+- [ ] Date Night auto-page — Auto-generate a scrapbook page with results/screenshots after completing an activity (trivia, race, painting)
+
+### Scrapbook — Delight & Polish
+- [x] Washi tape — 6 patterned tape strips (Pink Dots, Blue Stripe, Gold, Mint Check, Lavender, Red Heart) draggable over photos
+- [x] Page templates — 4 pre-laid-out templates (Blank, 2 Photos + Caption, Collage Grid, Full Bleed) that add placeholder items
+- [x] Page flip transitions — 3D perspective flip animation (rotateY) when navigating pages
+- [x] Undo/redo — Ctrl+Z / Ctrl+Y support with 30-entry history stack, keyboard shortcuts for Delete
+
+### Scrapbook — Multiplayer & Social
+- [x] Live cursors — Partner cursor rendering infrastructure (fuchsia dots on canvas)
+- [x] Item ownership badges — 👤 badge on hover showing who placed each item (createdBy)
+- [x] Item reactions — ❤️ toggle per item with count badge, persisted via API (upsert by user+item)
+
+### Scrapbook — Utility
+- [x] Export as image — Download current page as PNG via html2canvas (2x scale)
+- [x] Scrapbook sharing — Generate share token, public read-only view at /scrapbook/shared/[token] (no auth required)
+- [x] Item lock — Toggle lock on items, locked items show 🔒 indicator and can't be dragged/resized/rotated
 
 ### Activities (6 Standard Types)
 - [ ] Define the 6 activity types and their gameplay/interaction models
@@ -73,6 +111,7 @@
 - [ ] Make the map the primary dashboard experience
 - [ ] Quest panels slide out as overlays (e.g., Music Lounge opens Spotify panel)
 - [ ] Remove legacy dashboard grid layout
+- [ ] "Back to Map" / "Back to Dashboard" context-aware navigation
 
 ### Social & Couples
 - [ ] Partner linking / invitation system
@@ -93,13 +132,6 @@
 - [ ] Achievement system / date night streaks
 - [ ] Seasonal map themes / event decorations
 - [ ] Voice chat integration
-
-
-
-- implement to-do feature to keep track of changes
-- Date night calendar (send us a text 2 days before)
-- Escape room activity
-- room joining trivia, paint studio
-- photo upload and paper color in scrapbook
-- Photobooth type thing for date night picture. (locket as inspiration)
-- Go back to map needs to be go back to dashboard if coming from dashboard.
+- [ ] To-do feature to keep track of changes
+- [ ] Date night calendar (send us a text 2 days before)
+- [ ] Escape room activity

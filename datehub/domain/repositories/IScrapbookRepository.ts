@@ -2,6 +2,7 @@ import {
   ScrapbookData,
   ScrapbookPageData,
   ScrapbookItemData,
+  ScrapbookReactionData,
 } from "@/domain/entities/Scrapbook";
 
 export interface IScrapbookRepository {
@@ -34,8 +35,17 @@ export interface IScrapbookRepository {
         | "scale"
         | "zIndex"
         | "content"
+        | "locked"
       >
     >
   ): Promise<ScrapbookItemData>;
   deleteItem(itemId: string): Promise<void>;
+  toggleItemLock(itemId: string, locked: boolean): Promise<ScrapbookItemData>;
+  addReaction(itemId: string, userId: string, emoji: string): Promise<ScrapbookReactionData>;
+  removeReaction(itemId: string, userId: string): Promise<void>;
+  generateShareToken(scrapbookId: string): Promise<string>;
+  findByShareToken(token: string): Promise<ScrapbookData | null>;
+  updatePage(pageId: string, updates: Partial<Pick<ScrapbookPageData, "backgroundColor">>): Promise<ScrapbookPageData>;
+  deletePage(pageId: string): Promise<void>;
+  deleteScrapbook(id: string): Promise<void>;
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useUser, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { GraduationCap, Radio, Eye } from "lucide-react";
 
 const ROOM_ID = "homework-default";
 const POLL_INTERVAL = 1500;
@@ -273,7 +274,7 @@ export default function HomeworkPage() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/25">
-              <span className="text-lg">🎓</span>
+              <GraduationCap className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold tracking-tight text-white">
               Homework<span className="text-blue-400">Night</span>
@@ -295,7 +296,7 @@ export default function HomeworkPage() {
         </Link>
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-white">Homework Night 🎓</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Homework Night</h1>
           <p className="mt-1 text-zinc-500">
             Share your screen so your partner can follow along — great for notes on your iPad!
           </p>
@@ -309,7 +310,7 @@ export default function HomeworkPage() {
           <span className="text-sm text-zinc-300">{status}</span>
           {mode !== "idle" && (
             <span className="ml-auto rounded-full bg-white/[0.06] px-3 py-0.5 text-[11px] font-medium text-zinc-400">
-              {mode === "hosting" ? "📡 Hosting" : "👀 Viewing"}
+              {mode === "hosting" ? <><Radio className="h-3.5 w-3.5 inline" /> Hosting</> : <><Eye className="h-3.5 w-3.5 inline" /> Viewing</>}
             </span>
           )}
         </div>
@@ -321,7 +322,7 @@ export default function HomeworkPage() {
               onClick={startSharing}
               className="group flex flex-col items-center gap-3 rounded-2xl border border-blue-500/20 bg-blue-500/[0.06] p-8 transition-all hover:border-blue-500/40 hover:bg-blue-500/[0.1]"
             >
-              <span className="text-4xl">📡</span>
+              <Radio className="h-10 w-10 text-blue-400" />
               <span className="text-lg font-semibold text-white">Share My Screen</span>
               <span className="text-xs text-zinc-500">
                 Share your iPad, notes, or any window
@@ -331,7 +332,7 @@ export default function HomeworkPage() {
               onClick={startViewing}
               className="group flex flex-col items-center gap-3 rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.06] p-8 transition-all hover:border-indigo-500/40 hover:bg-indigo-500/[0.1]"
             >
-              <span className="text-4xl">👀</span>
+              <Eye className="h-10 w-10 text-indigo-400" />
               <span className="text-lg font-semibold text-white">Watch Stream</span>
               <span className="text-xs text-zinc-500">
                 View your partner&apos;s shared screen
@@ -398,7 +399,7 @@ export default function HomeworkPage() {
           {mode === "idle" && (
             <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-white/[0.06] bg-white/[0.01]">
               <div className="flex flex-col items-center gap-2 py-16">
-                <span className="text-5xl opacity-30">🎓</span>
+                <GraduationCap className="h-12 w-12 text-zinc-700" />
                 <span className="text-sm text-zinc-600">
                   Share your screen or watch your partner&apos;s
                 </span>
