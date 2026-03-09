@@ -46,7 +46,9 @@ export async function POST(request: NextRequest) {
       rotation,
       scale,
       zIndex,
+      locked: false,
       createdBy: user.userId,
+      reactions: [],
     });
     return { item };
   }, 201);

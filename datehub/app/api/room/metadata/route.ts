@@ -6,7 +6,7 @@ import { requireAuth } from "@/lib/auth-middleware";
 
 const updateSchema = z.object({
   roomId: z.string().min(1),
-  metadata: z.record(z.unknown()),
+  metadata: z.record(z.string(), z.unknown()),
 });
 
 export async function PUT(request: NextRequest) {

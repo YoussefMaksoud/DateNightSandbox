@@ -6,7 +6,7 @@ import { requireAuth } from "@/lib/auth-middleware";
 
 const createSchema = z.object({
   type: z.string().min(1),
-  config: z.record(z.unknown()).default({}),
+  config: z.record(z.string(), z.unknown()).default({}),
 });
 
 export async function POST(request: NextRequest) {
