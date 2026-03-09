@@ -273,16 +273,22 @@ export default function ScrapbookEditorPage() {
 
   // --- Data fetching ---
 
-  const fetchScrapbook = useCallback(async () => {
+  // Track whether user is actively interacting (drag/resize/rotate/edit/draw)
+  const isBusyRef = useRef(false);
+
+  const fetchScrapbook = useCallback(async (force = false) => {
+    if (!force && isBusyRef.current) return; // skip poll during active interaction
     const res = await fetch(`/api/scrapbook/${scrapbookId}`);
     if (!res.ok) return;
     const data = await res.json();
-    setScrapbook(data.scrapbook);
+    if (!isBusyRef.current) {
+      setScrapbook(data.scrapbook);
+    }
   }, [scrapbookId]);
 
   useEffect(() => {
     if (!isLoaded || !user) return;
-    fetchScrapbook().then(() => setLoading(false));
+    fetchScrapbook(true).then(() => setLoading(false));
   }, [isLoaded, user, fetchScrapbook]);
 
   useEffect(() => {
@@ -357,7 +363,7 @@ export default function ScrapbookEditorPage() {
         zIndex: (currentPage.items.length || 0) + 1,
       }),
     });
-    await fetchScrapbook();
+    await fetchScrapbook(true);
   }
 
   async function addWashiTape(tape: typeof WASHI_TAPES[0]) {
@@ -374,7 +380,7 @@ export default function ScrapbookEditorPage() {
         zIndex: (currentPage.items.length || 0) + 1,
       }),
     });
-    await fetchScrapbook();
+    await fetchScrapbook(true);
   }
 
   async function addText() {
@@ -390,7 +396,7 @@ export default function ScrapbookEditorPage() {
         width: 200, height: 60, zIndex: (currentPage.items.length || 0) + 1,
       }),
     });
-    await fetchScrapbook();
+    await fetchScrapbook(true);
   }
 
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -426,7 +432,7 @@ export default function ScrapbookEditorPage() {
           }),
         });
       }
-      await fetchScrapbook();
+      await fetchScrapbook(true);
     }
     setUploading(false);
     setUploadTargetItemId(null);
@@ -442,7 +448,7 @@ export default function ScrapbookEditorPage() {
     pushHistory();
     await fetch(`/api/scrapbook/${scrapbookId}/item/${itemId}`, { method: "DELETE" });
     if (selectedItem === itemId) setSelectedItem(null);
-    await fetchScrapbook();
+    await fetchScrapbook(true);
   }
 
   async function updateItem(itemId: string, updates: Record<string, unknown>) {
@@ -464,7 +470,7 @@ export default function ScrapbookEditorPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pageNumber: nextNum }),
     });
-    await fetchScrapbook();
+    await fetchScrapbook(true);
     setCurrentPageIdx(nextNum - 1);
   }
 
@@ -478,7 +484,7 @@ export default function ScrapbookEditorPage() {
       body: JSON.stringify({ pageId: currentPage.id }),
     });
     setCurrentPageIdx(Math.max(0, currentPageIdx - 1));
-    await fetchScrapbook();
+    await fetchScrapbook(true);
   }
 
   async function updatePageColor(color: string) {
@@ -505,7 +511,7 @@ export default function ScrapbookEditorPage() {
     }
     setSelectedItem(null);
     if (template.items.length === 0) {
-      await fetchScrapbook();
+      await fetchScrapbook(true);
       return;
     }
     for (const item of template.items) {
@@ -522,7 +528,7 @@ export default function ScrapbookEditorPage() {
         }),
       });
     }
-    await fetchScrapbook();
+    await fetchScrapbook(true);
   }
 
   // --- Frame change ---
@@ -568,7 +574,7 @@ export default function ScrapbookEditorPage() {
         body: JSON.stringify({ emoji: "❤️" }),
       });
     }
-    await fetchScrapbook();
+    await fetchScrapbook(true);
   }
 
   // --- Share ---
@@ -602,6 +608,7 @@ export default function ScrapbookEditorPage() {
   // --- Inline text editing ---
   function startTextEdit(item: ScrapbookItem) {
     const parsed = safeParseTextContent(item.content);
+    isBusyRef.current = true;
     setEditingText(item.id);
     setEditTextValue(parsed.text);
     setTextFont(parsed.font);
@@ -622,12 +629,15 @@ export default function ScrapbookEditorPage() {
     });
     await updateItem(editingText, { content });
     setEditingText(null);
+    isBusyRef.current = false;
+    fetchScrapbook(true);
   }
 
   // --- Drawing ---
   function handleDrawStart(e: React.MouseEvent) {
     if (activePanel !== "draw") return;
     e.preventDefault();
+    isBusyRef.current = true;
     setIsDrawing(true);
     const { x, y } = canvasCoords(e);
     setCurrentPaths([{ x, y }]);
@@ -643,6 +653,7 @@ export default function ScrapbookEditorPage() {
     if (!isDrawing || !currentPage || currentPaths.length < 2) {
       setIsDrawing(false);
       setCurrentPaths([]);
+      isBusyRef.current = false;
       return;
     }
     setIsDrawing(false);
@@ -650,6 +661,7 @@ export default function ScrapbookEditorPage() {
     const updatedPaths = [...allDrawPaths, newPath];
     setAllDrawPaths(updatedPaths);
     setCurrentPaths([]);
+    isBusyRef.current = false;
   }
 
   async function saveDrawing() {
@@ -666,7 +678,7 @@ export default function ScrapbookEditorPage() {
       }),
     });
     setAllDrawPaths([]);
-    await fetchScrapbook();
+    await fetchScrapbook(true);
   }
 
   // --- Drag / resize / rotate ---
@@ -678,6 +690,7 @@ export default function ScrapbookEditorPage() {
     setSelectedItem(item.id);
     if (editingText && editingText !== item.id) finishTextEdit();
     const { x, y } = canvasCoords(e);
+    isBusyRef.current = true;
     setDragging({ itemId: item.id, offsetX: x - item.x, offsetY: y - item.y });
   }
 
@@ -685,6 +698,7 @@ export default function ScrapbookEditorPage() {
     if (item.locked) return;
     e.preventDefault(); e.stopPropagation();
     const { x, y } = canvasCoords(e);
+    isBusyRef.current = true;
     setResizing({ itemId: item.id, startX: x, startY: y, startW: item.width, startH: item.height, corner });
   }
 
@@ -695,6 +709,7 @@ export default function ScrapbookEditorPage() {
     const cx = item.x + item.width / 2;
     const cy = item.y + item.height / 2;
     const startAngle = Math.atan2(y - cy, x - cx) * (180 / Math.PI);
+    isBusyRef.current = true;
     setRotating({ itemId: item.id, startAngle, startRotation: item.rotation });
   }
 
@@ -746,26 +761,34 @@ export default function ScrapbookEditorPage() {
     }
   }
 
-  function handleMouseUp() {
+  async function handleMouseUp() {
     if (activePanel === "draw" && isDrawing) { handleDrawEnd(); return; }
     if (!scrapbook) return;
+    let didInteract = false;
     if (dragging) {
+      didInteract = true;
       pushHistory();
       const item = scrapbook.pages.flatMap((p) => p.items).find((it) => it.id === dragging.itemId);
-      if (item) updateItem(dragging.itemId, { x: item.x, y: item.y });
+      if (item) await updateItem(dragging.itemId, { x: item.x, y: item.y });
       setDragging(null);
     }
     if (resizing) {
+      didInteract = true;
       pushHistory();
       const item = scrapbook.pages.flatMap((p) => p.items).find((it) => it.id === resizing.itemId);
-      if (item) updateItem(resizing.itemId, { width: item.width, height: item.height });
+      if (item) await updateItem(resizing.itemId, { width: item.width, height: item.height });
       setResizing(null);
     }
     if (rotating) {
+      didInteract = true;
       pushHistory();
       const item = scrapbook.pages.flatMap((p) => p.items).find((it) => it.id === rotating.itemId);
-      if (item) updateItem(rotating.itemId, { rotation: item.rotation });
+      if (item) await updateItem(rotating.itemId, { rotation: item.rotation });
       setRotating(null);
+    }
+    if (didInteract) {
+      isBusyRef.current = false;
+      await fetchScrapbook(true);
     }
   }
 

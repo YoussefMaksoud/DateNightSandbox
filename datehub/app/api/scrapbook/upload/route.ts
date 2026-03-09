@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-middleware";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
+import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
 
 export async function POST(request: NextRequest) {
@@ -26,17 +25,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const dir = join(process.cwd(), "public", "uploads", "scrapbook");
-    await mkdir(dir, { recursive: true });
+    const filename = `scrapbook/${randomUUID()}.${ext}`;
+    const blob = await put(filename, file, { access: "public" });
 
-    const filename = `${randomUUID()}.${ext}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(join(dir, filename), buffer);
-
-    return NextResponse.json(
-      { url: `/uploads/scrapbook/${filename}` },
-      { status: 201 }
-    );
+    return NextResponse.json({ url: blob.url }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
